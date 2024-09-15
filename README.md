@@ -1,3 +1,7 @@
+# README
+- Medical fullstack application for manging patient data (appointment bookings, dictations for DICOM images, etc.)
+- Authenticated, stores hashed passwords in DB
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
