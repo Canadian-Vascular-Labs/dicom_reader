@@ -68,3 +68,17 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+### Mongo Instructions
+
+Run Mongo as MacOS Service:
+
+#### `brew services start mongodb-community@7.0`
+
+Connect and Use MongoDB
+
+#### `mongosh`
+
+Stop with:
+
+#### `brew services stop mongodb-community@7.0`
