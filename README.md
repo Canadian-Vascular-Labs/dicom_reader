@@ -1,6 +1,7 @@
 # README
 - Medical fullstack application for manging patient data (appointment bookings, dictations for DICOM images, etc.)
-- Authenticated, stores hashed passwords in DB
+- Authentication well-tested stores hashed passwords in DB; can't access routes unless logged in
+- 
 
 # Getting Started with Create React App
 
