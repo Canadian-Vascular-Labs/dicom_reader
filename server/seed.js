@@ -1,154 +1,133 @@
-const { faker } = require('@faker-js/faker');
 const bcrypt = require('bcryptjs');
 
-const Appointment = require('./models/appointment');
-const Clinic = require('./models/clinic');
 const Doctor = require('./models/doctor');
-const Patient = require('./models/patient');
 const User = require('./models/user');
+// import-doctors.js
+
+require('dotenv').config();
+const path = require('path');
+const fs = require('fs').promises;
+const mongoose = require('mongoose');
 
 async function seedDoctors() {
-   const doctors = [];
-   for (let i = 0; i < 4; ++i) {
-      const newDoctor = await Doctor.create({
-         name: faker.person.fullName(),
-         email: faker.internet.email(),
-         specialization: faker.helpers.arrayElement(['Cardiology', 'Dermatology', 'Oncology', 'Vascular']),
-         phoneNumber: faker.phone.number(),
-      });
-      doctors.push(newDoctor);
-   }
-   return doctors;
+    console.log('Seeding doctors...');
+    var total_doctors = 0;
+    // 1) Connect to MongoDB
+    const uri = process.env.MONGO_URI;
+    if (!uri) throw new Error('MONGO_URI not set in .env');
+    await mongoose.connect(uri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+    console.log('✅ Connected to MongoDB');
+
+    // 2) Find all .json files in the extracted_data folder
+    const dataDir = path.join(__dirname, '../..', 'cpso-doctor-extractor', 'extracted_data');
+    const files = await fs.readdir(dataDir);
+    for (const file of files.filter(f => f.endsWith('.json'))) {
+        const filePath = path.join(dataDir, file);
+        // 'R1A.json'
+        // check if the file is not 'R1A.json' (file contains the entire path)
+        // if (!filePath.includes('R1A.json')) {
+        // if (!filePath.includes('L3Y.json')) {
+        //     continue;
+        // }
+        console.log(`→ Processing ${filePath}`);
+
+        // 3) Read & parse it
+        const txt = await fs.readFile(filePath, 'utf8');
+        const block = JSON.parse(txt);
+
+        // 4) Flatten { postal: [ docs ] } → [ docObject, … ]
+        const batch = [];
+        for (const [postal, docs] of Object.entries(block)) {
+            for (const d of docs) {
+                batch.push({
+                    name: d.name,
+                    cpsonumber: d.cpsonumber,
+                    specialties: d.specialties,
+                    primaryaddressnotinpractice: d.primaryaddressnotinpractice,
+                    street1: d.street1,
+                    street2: d.street2,
+                    street3: d.street3,
+                    street4: d.street4,
+                    city: d.city,
+                    province: d.province,
+                    postalcode: d.postalcode.trim().toUpperCase(),
+                    phonenumber: d.phonenumber,
+                    fax: d.fax,
+                    additionaladdresscount: d.additionaladdresscount,
+                    registrationstatus: d.registrationstatus,
+                    mostrecentformername: d.mostrecentformername,
+                    registrationstatuslabel: d.registrationstatuslabel,
+                    importedAt: new Date(),
+                    // if you want to populate nested additionaladdresses:
+                    additionaladdresses: d.additionaladdresses || []
+                });
+            }
+        }
+        // update total number of doctors
+        total_doctors += batch.length;
+
+        if (batch.length === 0) {
+            console.log(`⚠️  No doctors found in ${file}`);
+            continue;
+        }
+
+        // 5) Bulk insert (skipping duplicates via ordered:false)
+        try {
+            const res = await Doctor.insertMany(batch, { ordered: false });
+            console.log(`✅ Inserted ${res.length} docs from ${file}`);
+        } catch (err) {
+            console.warn(`⚠️  Some errors inserting ${file}:`, err.message);
+        }
+    }
+    console.log(`✅ Doctors successfully seeded -- ${total_doctors} doctors in total`);
 }
+
 
 async function seedUsers() {
-   console.log('Seeding users...');
+    console.log('Seeding users...');
 
-   const users = [];
-   // create admin user to be used on each run
-   const admin = await User.create({
-      name: 'Admin User',
-      email: 'test@example.com',
-      encryptedPassword: await bcrypt.hash('password123', parseInt(process.env.PASSWORD_SALT) || 10),
-      role: 'admin',
-   });
-   users.push(admin);
+    const users = [];
+    // create admin user to be used on each run
+    const admin = await User.create({
+        name: 'Admin User',
+        email: 'test@example.com',
+        encryptedPassword: await bcrypt.hash(`${process.env.ADMIN_PASSOWRD}`, parseInt(process.env.PASSWORD_SALT) || 10),
+        role: 'admin',
+    });
+    users.push(admin);
+    console.log('Admin user created:', admin);
 
-   let numDoctors = 0;
-   for (let i = 1; i < 10; ++i) {
-      console.log('Creating user: ', i);
-      const f_name = faker.person.fullName();
-      const email = faker.internet.email();
-      const password = faker.internet.password();
-      const encryptedPassword = await bcrypt.hash(password, parseInt(process.env.PASSWORD_SALT) || 10);
-      let f_role = faker.helpers.arrayElement(['doctor', 'user']);
-      if (numDoctors < 2 && i > 8) {
-         f_role = 'doctor';
-      }
-
-      const newUser = await User.create({
-         name: f_name,
-         email: email,
-         encryptedPassword: encryptedPassword,
-         role: f_role,
-      });
-      if (f_role === 'doctor') {
-         ++numDoctors;
-      }
-      users.push(newUser);
-
-   }
-   return users;
+    return users;
 }
 
-async function seedClinics() {
-   const clinics = [];
-   for (let i = 0; i < 2; ++i) {
-      const newClinic = await Clinic.create({
-         name: faker.company.name(),
-         address: faker.location.streetAddress(),
-         phoneNumber: faker.phone.number(),
-         doctors: [],
-         users: [],
-      });
-      clinics.push(newClinic);
-   }
-   return clinics;
-}
-
-async function seedPatients(clinics, doctors) {
-   const patients = [];
-   for (let i = 0; i < 30; i++) {
-      const newPatient = await Patient.create({
-         name: faker.person.fullName(),
-         email: faker.internet.email(),
-         phoneNumber: faker.phone.number(),
-         gender: faker.helpers.arrayElement(['Male', 'Female']),
-         primaryPhysician: faker.helpers.arrayElement(doctors)._id,
-         medicalHistory: faker.helpers.arrayElements(['Diabetes', 'High blood pressure', 'Asthma'], 2),
-         appointments: [
-            {
-               date: faker.date.future(),
-               reason: faker.lorem.sentence(),
-               notes: faker.lorem.paragraph(),
-            },
-         ],
-         clinics: [faker.helpers.arrayElement(clinics)._id],
-      });
-      patients.push(newPatient);
-   }
-   return patients;
-}
-
-async function seedAppointments(doctors, patients, users) {
-   for (let i = 0; i < 30; i++) {
-      await Appointment.create({
-         date: faker.date.future(),
-         createdBy: users[0]._id, // Admin
-         patient: faker.helpers.arrayElement(patients)._id,
-         doctor: faker.helpers.arrayElement(doctors)._id,
-         reason: faker.lorem.sentence(),
-         notes: faker.lorem.paragraph(),
-      });
-   }
-}
 
 const seedData = async () => {
-   try {
-      // Remove all existing data
-      await User.deleteMany({});
-      await Doctor.deleteMany({});
-      await Patient.deleteMany({});
-      await Clinic.deleteMany({});
-      await Appointment.deleteMany({});
-      console.log('Existing data cleared!');
+    try {
+        // Remove all existing data
+        await User.deleteMany({});
+        console.log('Existing USER data cleared!');
 
-      // Create users
-      const users = await seedUsers();
-      console.log('Users seeded:', users.length);
+        // Create users
+        const users = await seedUsers();
+        console.log('Users seeded:', users.length);
 
-      // Create doctors
-      const doctors = await seedDoctors();
-      console.log('Doctors seeded:', doctors.length);
+        await Doctor.deleteMany({});
+        console.log('Existing DOCTOR data cleared!');
+        // Create doctors
+        seedDoctors()
+            .catch(err => {
+                console.error('❌ Seed failed:', err);
+                process.exit(1);
+            });
 
-      // Create clinics
-      const clinics = await seedClinics();
-      console.log('Clinics seeded:', clinics.length);
-
-      // Create patients
-      const patients = await seedPatients(clinics, doctors);
-      console.log('Patients seeded:', patients.length);
-
-      // Create appointments
-      await seedAppointments(doctors, patients, users);
-
-      console.log('Appointments seeded');
-
-      console.log('Data seeding complete!');
-   } catch (error) {
-      console.error('Error seeding data:', error);
-      process.exit(1); // Exit with failure
-   }
+        console.log('Data seeding complete!');
+    } catch (error) {
+        console.error('Error seeding data:', error);
+        process.exit(1); // Exit with failure
+    }
 };
 
 module.exports = seedData;
