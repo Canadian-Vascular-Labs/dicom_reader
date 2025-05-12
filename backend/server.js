@@ -11,8 +11,13 @@ const bodyParser = require('body-parser');
 // Initialize the Express app
 const app = express();
 
+const allowed = [
+    process.env.ORIGIN_DEV,
+    process.env.ORIGIN_PROD
+];
+
 app.use(cors({
-    origin: process.env.NODE_ENV === 'development' ? process.env.ORIGIN_DEV : process.env.ORIGIN_PROD,
+    origin: allowed,
     credentials: true,                 // allow cookies/auth headers
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
