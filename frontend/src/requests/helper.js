@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
 export const fetchData = async (resource, setData, setLoading, navigate) => {
     try {
@@ -9,7 +10,7 @@ export const fetchData = async (resource, setData, setLoading, navigate) => {
             return;
         }
 
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/${resource}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/${resource}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

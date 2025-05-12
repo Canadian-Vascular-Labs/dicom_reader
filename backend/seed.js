@@ -13,9 +13,10 @@ async function seedDoctors() {
     console.log('Seeding doctors...');
     var total_doctors = 0;
     // 1) Connect to MongoDB
-    const uri = process.env.MONGO_URI;
-    if (!uri) throw new Error('MONGO_URI not set in .env');
-    await mongoose.connect(uri, {
+    const { MONGO_URI } = require('./config/config');
+
+    if (!MONGO_URI) throw new Error('MONGO_URI not set in .env');
+    await mongoose.connect(MONGO_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
     });
@@ -107,21 +108,21 @@ async function seedUsers() {
 const seedData = async () => {
     try {
         // Remove all existing data
-        // await User.deleteMany({});
-        // console.log('Existing USER data cleared!');
+        await User.deleteMany({});
+        console.log('Existing USER data cleared!');
 
         // Create users
-        // const users = await seedUsers();
-        // console.log('Users seeded:', users.length);
+        const users = await seedUsers();
+        console.log('Users seeded:', users.length);
 
-        // await Doctor.deleteMany({});
-        // console.log('Existing DOCTOR data cleared!');
-        // // Create doctors
-        // seedDoctors()
-        //     .catch(err => {
-        //         console.error('❌ Seed failed:', err);
-        //         process.exit(1);
-        //     });
+        await Doctor.deleteMany({});
+        console.log('Existing DOCTOR data cleared!');
+        // Create doctors
+        seedDoctors()
+            .catch(err => {
+                console.error('❌ Seed failed:', err);
+                process.exit(1);
+            });
 
         console.log('Data seeding complete!');
     } catch (error) {

@@ -3,6 +3,8 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
+
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -29,8 +31,8 @@ const LoginPage = () => {
     const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
         try {
             console.log('Submitting login form:', values);
-            console.log('API URL:', `${process.env.REACT_APP_API_URL}/api/auth/login`);
-            const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, values);
+            console.log('API URL:', `${API_BASE_URL}/api/auth/login`);
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, values);
 
             // Store the JWT token in local storage
             localStorage.setItem('token', response.data.token);

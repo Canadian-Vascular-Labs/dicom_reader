@@ -3,6 +3,7 @@ import { LaptopOutlined, NotificationOutlined, UserOutlined } from '@ant-design/
 import { Breadcrumb, Layout, Menu, Calendar, theme, Descriptions } from 'antd';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -12,9 +13,9 @@ const { Header, Content, Footer, Sider } = Layout;
 const DashboardLayout = () => {
     const logout = async () => {
         try {
-            console.log("URL: ", `${process.env.REACT_APP_API_URL}/api/auth/logout`);
+            console.log("URL: ", `${API_BASE_URL}/api/auth/logout`);
             // Call the backend API to clear the token
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/logout`, {}, { withCredentials: true });
+            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
             localStorage.removeItem('token');
             navigate('/');
         } catch (error) {
