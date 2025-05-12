@@ -107,12 +107,12 @@ async function seedUsers() {
 const seedData = async () => {
     try {
         // Remove all existing data
-        await User.deleteMany({});
-        console.log('Existing USER data cleared!');
+        // await User.deleteMany({});
+        // console.log('Existing USER data cleared!');
 
         // Create users
-        const users = await seedUsers();
-        console.log('Users seeded:', users.length);
+        // const users = await seedUsers();
+        // console.log('Users seeded:', users.length);
 
         // await Doctor.deleteMany({});
         // console.log('Existing DOCTOR data cleared!');
