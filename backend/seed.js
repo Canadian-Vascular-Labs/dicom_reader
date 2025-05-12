@@ -114,14 +114,14 @@ const seedData = async () => {
         const users = await seedUsers();
         console.log('Users seeded:', users.length);
 
-        await Doctor.deleteMany({});
-        console.log('Existing DOCTOR data cleared!');
-        // Create doctors
-        seedDoctors()
-            .catch(err => {
-                console.error('❌ Seed failed:', err);
-                process.exit(1);
-            });
+        // await Doctor.deleteMany({});
+        // console.log('Existing DOCTOR data cleared!');
+        // // Create doctors
+        // seedDoctors()
+        //     .catch(err => {
+        //         console.error('❌ Seed failed:', err);
+        //         process.exit(1);
+        //     });
 
         console.log('Data seeding complete!');
     } catch (error) {
