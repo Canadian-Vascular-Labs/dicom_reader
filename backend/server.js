@@ -12,7 +12,7 @@ const bodyParser = require('body-parser');
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:3000',   // ← no path, just scheme://host:port
+    origin: process.env.NODE_ENV === 'development' ? process.env.ORIGIN_DEV : process.env.ORIGIN_PROD,
     credentials: true,                 // allow cookies/auth headers
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
