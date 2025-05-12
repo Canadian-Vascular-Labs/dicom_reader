@@ -1,5 +1,5 @@
 // Load environment variables
-require('dotenv').config({ path: '.env' });
+require('dotenv').config();
 
 // Import required modules
 const express = require('express');
@@ -8,16 +8,32 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 
+// Initialize the Express app
+const app = express();
+
+app.use(cors({
+    origin: 'http://localhost:3000',   // ← no path, just scheme://host:port
+    credentials: true,                 // allow cookies/auth headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    // optionsSuccessStatus: 204      // optional: some old browsers want 204 instead of 200
+}));
+
+// then the rest of your middleware & routes…
+app.use(helmet());
+app.use(bodyParser.json());
+app.use(morgan('dev'));
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctor');
 
+app.use('/api/auth', authRoutes);
+app.use('/api', doctorRoutes);
+
+
 // Import DB connection
 const connectDB = require('./config/db');
-
-// Initialize the Express app
-const app = express();
-
 // Connect to the database
 connectDB();
 
@@ -26,22 +42,6 @@ if (process.env.NODE_ENV === 'development') {
     const seedData = require('./seed');
     seedData();
 }
-
-
-
-// Apply middleware
-app.use(helmet());               // Security headers
-const corsOptions = {
-    origin: `http://localhost:${process.env.FRONT_END_PORT}`, // React frontend
-    credentials: true, // Allow credentials (cookies)
-};
-app.use(cors(corsOptions));      // Enable CORS
-app.use(bodyParser.json());      // Parse incoming JSON requests
-app.use(morgan('dev'));          // Logger for HTTP requests
-
-// API Routes
-app.use('/api/auth', authRoutes);          // Authentication routes
-app.use('/api', doctorRoutes);              // Doctor routes
 
 // Default route (root)
 app.get('/', (req, res) => {

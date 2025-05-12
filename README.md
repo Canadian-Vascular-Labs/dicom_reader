@@ -1,7 +1,8 @@
 # README
-- Medical fullstack application for manging patient data (appointment bookings, dictations for DICOM images, etc.)
+
+- Medical fullstack application for extracting doctor information into excel data.
 - Authentication well-tested stores hashed passwords in DB; can't access routes unless logged in
-- 
+-
 
 # Getting Started with Create React App
 
