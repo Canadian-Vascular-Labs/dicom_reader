@@ -44,7 +44,7 @@ connectDB();
 
 // Seed the database with dummy data
 if (process.env.NODE_ENV === 'development') {
-    const seedData = require('./seed');
+    const seedData = require('./seed.cjs');
     seedData();
 }
 

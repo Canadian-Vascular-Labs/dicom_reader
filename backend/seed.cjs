@@ -1,5 +1,5 @@
+const connectDB = require('./config/db');
 const bcrypt = require('bcryptjs');
-
 const Doctor = require('./models/doctor');
 const User = require('./models/user');
 // import-doctors.js
@@ -10,21 +10,14 @@ const fs = require('fs').promises;
 const mongoose = require('mongoose');
 
 async function seedDoctors() {
-    console.log('Seeding doctors...');
+    console.log('Seeding doctors()...');
     var total_doctors = 0;
-    // 1) Connect to MongoDB
-    const { MONGO_URI } = require('./config/config');
-
-    if (!MONGO_URI) throw new Error('MONGO_URI not set in .env');
-    await mongoose.connect(MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
-    console.log('✅ Connected to MongoDB');
 
     // 2) Find all .json files in the extracted_data folder
     const dataDir = path.join(__dirname, '../..', 'cpso-doctor-extractor', 'extracted_data');
+    console.log(`Searching for JSON files in ${dataDir}`);
     const files = await fs.readdir(dataDir);
+    console.log(`Found ${files.length} files in ${dataDir}`);
     for (const file of files.filter(f => f.endsWith('.json'))) {
         const filePath = path.join(dataDir, file);
         // 'R1A.json'
@@ -118,7 +111,7 @@ const seedData = async () => {
         await Doctor.deleteMany({});
         console.log('Existing DOCTOR data cleared!');
         // Create doctors
-        seedDoctors()
+        await seedDoctors()
             .catch(err => {
                 console.error('❌ Seed failed:', err);
                 process.exit(1);
@@ -132,3 +125,27 @@ const seedData = async () => {
 };
 
 module.exports = seedData;
+
+
+// if this script is run directly, seed the database
+if (require.main === module) {
+    (async () => {
+        try {
+            console.log('Connecting to MongoDB…');
+            await connectDB();
+
+            console.log('Seeding database…');
+            await seedData();
+
+            console.log('Seeding complete!');
+        } catch (err) {
+            console.error('Seeding failed:', err);
+            process.exit(1);
+        } finally {
+            // Close the connection
+            await mongoose.connection.close();
+            console.log('MongoDB connection closed.');
+            process.exit(0);
+        }
+    })();
+}
