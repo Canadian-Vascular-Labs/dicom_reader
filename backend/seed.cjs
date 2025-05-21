@@ -19,13 +19,11 @@ async function seedDoctors() {
     const files = await fs.readdir(dataDir);
     console.log(`Found ${files.length} files in ${dataDir}`);
     for (const file of files.filter(f => f.endsWith('.json'))) {
-        const filePath = path.join(dataDir, file);
-        // 'R1A.json'
-        // check if the file is not 'R1A.json' (file contains the entire path)
-        // if (!filePath.includes('R1A.json')) {
-        // if (!filePath.includes('L3Y.json')) {
+        // if (file !== 'M1H.json') {
+        //     // console.log(`⚠️  Skipping ${file}`);
         //     continue;
         // }
+        const filePath = path.join(dataDir, file);
         console.log(`→ Processing ${filePath}`);
 
         // 3) Read & parse it
@@ -34,35 +32,33 @@ async function seedDoctors() {
 
         // 4) Flatten { postal: [ docs ] } → [ docObject, … ]
         const batch = [];
-        for (const [postal, docs] of Object.entries(block)) {
-            for (const d of docs) {
-                batch.push({
-                    name: d.name,
-                    cpsonumber: d.cpsonumber,
-                    specialties: d.specialties,
-                    primaryaddressnotinpractice: d.primaryaddressnotinpractice,
-                    street1: d.street1,
-                    street2: d.street2,
-                    street3: d.street3,
-                    street4: d.street4,
-                    city: d.city,
-                    province: d.province,
-                    postalcode: d.postalcode.trim().toUpperCase(),
-                    phonenumber: d.phonenumber,
-                    fax: d.fax,
-                    additionaladdresscount: d.additionaladdresscount,
-                    registrationstatus: d.registrationstatus,
-                    mostrecentformername: d.mostrecentformername,
-                    registrationstatuslabel: d.registrationstatuslabel,
-                    importedAt: new Date(),
-                    // if you want to populate nested additionaladdresses:
-                    additionaladdresses: d.additionaladdresses || []
-                });
-            }
+        // print total number of keys (CPSONumbers in file)
+        const num_proposed_entries = Object.entries(block).length;
+        for (CPSO_Number of Object.entries(block)) {
+            const d = CPSO_Number[1];
+            batch.push({
+                name: d.name,
+                cpsonumber: d.cpsonumber,
+                specialties: d.specialties,
+                primaryaddressnotinpractice: d.primaryaddressnotinpractice,
+                street1: d.street1,
+                street2: d.street2,
+                street3: d.street3,
+                street4: d.street4,
+                city: d.city,
+                province: d.province,
+                postalcode: d.postalcode.trim().toUpperCase(),
+                phonenumber: d.phonenumber,
+                fax: d.fax,
+                additionaladdresscount: d.additionaladdresscount,
+                registrationstatus: d.registrationstatus,
+                mostrecentformername: d.mostrecentformername,
+                registrationstatuslabel: d.registrationstatuslabel,
+                importedAt: new Date(),
+                additionaladdresses: d.additionaladdresses || [],
+                inMailinglist: d.inMailinglist || false,
+            });
         }
-        // update total number of doctors
-        total_doctors += batch.length;
-
         if (batch.length === 0) {
             console.log(`⚠️  No doctors found in ${file}`);
             continue;
@@ -70,10 +66,36 @@ async function seedDoctors() {
 
         // 5) Bulk insert (skipping duplicates via ordered:false)
         try {
-            const res = await Doctor.insertMany(batch, { ordered: false });
-            console.log(`✅ Inserted ${res.length} docs from ${file}`);
+            // simple version: returns an array of docs
+            const docs = await Doctor.insertMany(batch, { ordered: false });
+            console.log(`✅ Inserted ${docs.length} docs from ${file}`);
+            // update total number of doctors
+            total_doctors += docs.length;
+
+            if (docs.length !== num_proposed_entries) {
+                console.warn(`⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️  ${num_proposed_entries - docs.length} entry skipped`);
+            }
+
         } catch (err) {
-            console.warn(`⚠️  Some errors inserting ${file}:`, err.message);
+            console.error('Bulk insert threw an unexpected error:', err);
+
+            // pull out whatever place Mongoose/Mongo put the per-doc failures
+            const writeErrs =
+                err.writeErrors ||
+                (err.result && err.result.writeErrors) ||
+                (err.err && err.err.writeErrors) ||
+                [];
+
+            if (writeErrs.length) {
+                console.warn(`⚠️  ${writeErrs.length} docs failed to insert:`);
+                writeErrs.forEach(e => {
+                    console.warn(
+                        ` • index=${e.index}  errmsg=${e.errmsg || e.err.message}`
+                    );
+                });
+            } else {
+                console.warn('⚠️  No writeErrors array found; full error above.');
+            }
         }
     }
     console.log(`✅ Doctors successfully seeded -- ${total_doctors} doctors in total`);
@@ -100,6 +122,8 @@ async function seedUsers() {
 
 const seedData = async () => {
     try {
+        console.log('⛓️ Model is bound to DB:', Doctor.db.databaseName);
+
         // Remove all existing data
         await User.deleteMany({});
         console.log('Existing USER data cleared!');
@@ -118,6 +142,9 @@ const seedData = async () => {
             });
 
         console.log('Data seeding complete!');
+
+
+        // process.exit(1);
     } catch (error) {
         console.error('Error seeding data:', error);
         process.exit(1); // Exit with failure

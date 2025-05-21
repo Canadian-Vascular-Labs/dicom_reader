@@ -25,6 +25,7 @@ const filterOptions = [
     { value: "fsa", label: "Filter by FSA" },
     { value: "specialties", label: "Filter by Specialties" },
     { value: "name", label: "Filter by Name" },
+    { value: "inMailinglist", label: "Filter by Mailing List" },
 ];
 
 // load labs
@@ -119,6 +120,7 @@ const columns = [
 ];
 
 export default function DoctorsView() {
+    const [cpsoNumbers, setCpsoNumbers] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterValues, setFilterValues] = useState({
@@ -126,6 +128,7 @@ export default function DoctorsView() {
         fsa: [],
         specialties: [],
         name: [],
+        inMailinglist: [],
     });
 
     // initialize specialties to filter for all specialties
@@ -135,6 +138,7 @@ export default function DoctorsView() {
 
     // fetch once
     useEffect(() => {
+        fetchData("doctors/cpso", setCpsoNumbers, setLoading, navigate);
         fetchData("doctors", setDoctors, setLoading, navigate);
         // set select all for default
         setFilterValues((fv) => ({
@@ -142,6 +146,16 @@ export default function DoctorsView() {
             specialties: specialtyOptions.map((s) => s.value),
         }));
     }, [navigate]);
+
+
+    // use effect that checks if any doctors have inMailinglist = true
+    useEffect(() => {
+        const inMailinglist = doctors.filter((doc) => doc.inMailinglist === true);
+        if (inMailinglist.length > 0) {
+            console.log("inMailinglist", inMailinglist);
+        }
+    }, [doctors]);
+
 
     // use effect to update FSA options when labfilter changes
     useEffect(() => {
@@ -201,11 +215,23 @@ export default function DoctorsView() {
         return copy;
     }, [filterValues.fsa]);
 
-    console.log("labKeys", labKeys);
 
+    // ensure only one of True/False is selected for inMailinglist
+    useEffect(() => {
+        const selected = filterValues.inMailinglist;
+        if (selected.length > 1) {
+            setFilterValues((fv) => ({
+                ...fv,
+                inMailinglist: [selected[selected.length - 1]],
+            }));
+        }
+    }
+        , [filterValues.inMailinglist]);
+
+
+    console.log("doctors[0]", doctors[0]);
     // helper: returns the doctors array filtered _only_ by all fields except `skipField`
     const doctorsMatchingOtherFilters = (skipField) => {
-        // console.log('doctorsMatchingOtherFilters', skipField); // should be 'name'
         return doctors.filter((doc) =>
             filterOptions
                 .map((o) => o.value)
@@ -231,6 +257,7 @@ export default function DoctorsView() {
                 label: lab,
             }));
         }
+        if (field === "inMailinglist") return ['True', 'False'].map((v) => ({ value: v, label: v }));
         if (field === "specialties") return specialtyOptions;
         if (field === "fsa") return fsaOptions;
         // for name, or any other dynamic field:
@@ -251,11 +278,26 @@ export default function DoctorsView() {
                 selected = labFSAVals || [];
             }
             if (!selected.length) return true;
-            const usePostalCode = field === "fsa" || field === "labfilter";
-            const cell = (doc[usePostalCode ? "postalcode" : field] || "")
-                .toString()
-                .toLowerCase();
-            return selected.some((val) => cell.includes(val.toLowerCase()));
+            if (field === "inMailinglist") {
+                const cell = doc.inMailinglist;
+                if (doc.inMailinglist === true) {
+                    // console.log("cell", cell);
+                }
+
+                // return docs with inMailinglist = selected
+                // make sure selected is only true or false
+
+                const selectedBool = selected[0] === "True" ? true : false;
+
+                return cell === selectedBool;
+            }
+            else {
+                const usePostalCode = field === "fsa" || field === "labfilter";
+                const cell = (doc[usePostalCode ? "postalcode" : field] ?? "")
+                    .toString()
+                    .toLowerCase();
+                return selected.some((val) => cell.includes(val.toLowerCase()));
+            }
         })
     );
 
@@ -293,6 +335,10 @@ export default function DoctorsView() {
                     // if it's an object/array, stringify it
                     if (typeof val === "object") {
                         val = JSON.stringify(val);
+                    }
+                    if (field === "phonenumber" || field === "fax") {
+                        // if it's a phone number, make sure no formatting is applied -- just the raw number
+                        val = val.replace(/[^0-9]/g, "");
                     }
 
                     // normalize undefined/null → empty string

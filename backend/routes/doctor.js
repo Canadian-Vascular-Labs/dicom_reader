@@ -24,7 +24,24 @@ router.get('/doctors', authenticateJWT, async (req, res) => {
             .find({})                 // no filter → all docs
             .sort({ name: 1 })        // optional: alphabetical
             .lean();
+        // log the MB for the response
+        console.log("Response MB: ", JSON.stringify(doctors).length / 1000000);
+
         res.status(200).json(doctors);
+    } catch (error) {
+        res.status(510).json({ message: 'Error retrieving doctors', error });
+    }
+});
+
+
+// return all CPSO numbers
+router.get('/doctors/cpso', authenticateJWT, async (req, res) => {
+    console.log("Retrieving doctor CPSO numbers");
+    try {
+        const numbers = await Doctor.distinct('cpsonumber');
+        // log the MB for the response
+        console.log("Response MB: ", JSON.stringify(numbers).length / 1000000);
+        res.status(200).json(numbers);
     } catch (error) {
         res.status(510).json({ message: 'Error retrieving doctors', error });
     }

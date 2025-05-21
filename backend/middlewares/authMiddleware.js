@@ -5,20 +5,24 @@
 const jwt = require('jsonwebtoken');
 
 const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader) {
-    const token = authHeader.split(' ')[1]; // remove 'Bearer' from token
-    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) {
-        return res.sendStatus(403);
-      }
-      req.user = user;
-      next();
-    });
-  }
-  else {
-    return res.status(401).json({ message: 'Access denied. Authorization header is required' });
-  }
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1]; // remove 'Bearer' from token
+        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+            if (err) {
+                if (err.name === 'TokenExpiredError') {
+                    return res.status(401).json({ message: 'TokenExpired' });
+                }
+                return res.sendStatus(403);
+            }
+
+            req.user = user;
+            next();
+        });
+    }
+    else {
+        return res.status(404).json({ message: 'Access denied. Authorization header is required' });
+    }
 };
 
 module.exports = authenticateJWT;

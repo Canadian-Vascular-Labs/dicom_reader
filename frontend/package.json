@@ -17,6 +17,7 @@
     "formik": "^2.4.6",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "mongoose": "^8.6.1",
     "morgan": "^1.10.0",
     "react": "^18.3.1",

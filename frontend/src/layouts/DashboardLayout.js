@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import { LaptopOutlined, NotificationOutlined, UserOutlined } from '@ant-design/icons';
 import { Breadcrumb, Layout, Menu, Calendar, theme, Descriptions } from 'antd';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
@@ -28,6 +29,23 @@ const DashboardLayout = () => {
     } = theme.useToken();
 
     const navigate = useNavigate(); // React router navigation
+
+    useEffect(() => {
+        // check if the token is present in local storage
+        const token = localStorage.getItem('token');
+        // check if the token is expired, if so, logout the user
+        if (token) {
+            const decodedToken = jwtDecode(token);
+            const currentTime = Date.now() / 1000; // Current time in seconds
+            if (decodedToken.exp < currentTime) {
+                // Token is expired, logout the user
+                logout();
+            }
+        } else {
+            // No token found, redirect to login page
+            logout();
+        }
+    }, [navigate]);
 
     const items1 = [
         {

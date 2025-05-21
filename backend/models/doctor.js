@@ -3,14 +3,14 @@ const mongoose = require('mongoose');
 const doctorSchema = new mongoose.Schema({
     name: { type: String, required: true },
     cpsonumber: { type: String, required: true, unique: true },
-    specialties: { type: String, required: true },
+    specialties: { type: String, required: false, default: 'Not Specified' },
     primaryaddressnotinpractice: { type: Boolean, default: false },
     street1: { type: String, required: true },
     street2: { type: String },
     street3: { type: String },
     street4: { type: String },
-    city: { type: String, required: true },
-    province: { type: String, required: true },
+    city: { type: String, default: '' },
+    province: { type: String, default: '' },
     postalcode: { type: String, required: true },
     phonenumber: { type: String },
     fax: { type: String },
@@ -31,7 +31,9 @@ const doctorSchema = new mongoose.Schema({
             phones: [{ type: String }],
             faxes: [{ type: String }],
         }
-    ]
+    ],
+    // boolean for if the doctor was in the mailing list before
+    inMailinglist: { type: Boolean, default: false },
 });
 
 // create an index on postalcode for fast lookups
