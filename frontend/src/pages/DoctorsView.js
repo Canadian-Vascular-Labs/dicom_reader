@@ -144,10 +144,10 @@ export default function DoctorsView() {
 
     //
     useEffect(() => {
-        // set select all for default
         setFilterValues((fv) => ({
             ...fv,
-            specialties: specialtyOptions.map((s) => s.value),
+            // set select all for default
+            // specialties: specialtyOptions.map((s) => s.value),
         }));
     }, []);
 
@@ -173,15 +173,6 @@ export default function DoctorsView() {
         //     specialties: specialtyOptions.map((s) => s.value),
         // }));
     }, [navigate, page, pageSize, filterValues]);
-
-    // use effect to destructure the doctors array
-    useEffect(() => {
-        // if (doctors['data'].length > 0) {
-        // set the doctors array to the data array
-        console.log("doctors", doctors);
-        console.log("array:", doctors["data"]);
-        // }
-    }, [doctors]);
 
     // use effect to update FSA options when labfilter changes
     useEffect(() => {
@@ -362,8 +353,7 @@ export default function DoctorsView() {
             document.body.removeChild(link);
         }).finally(() => {
             setIsDownloading(false);
-        }
-        );
+        });
     };
     const totalWidth = columns.reduce((sum, c) => sum + (c.width || 100), 0);
 
@@ -395,12 +385,15 @@ export default function DoctorsView() {
                                     style={{ minWidth: 200 }}
                                     allowClear
                                     value={filterValues[field] ?? ""}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
+
                                         setFilterValues((fv) => ({
                                             ...fv,
                                             [field]: e.target.value,
-                                        }))
-                                    }
+                                        }));
+                                        setPage(1); // reset to page 1
+                                        localStorage.setItem("doctorsPage", 1);
+                                    }}
                                 />
                             )
                         } else {
@@ -416,9 +409,11 @@ export default function DoctorsView() {
                                     disabled={field === "name"}
                                     options={getOptionsFor(field)}
                                     value={filterValues[field]}
-                                    onChange={(vals) =>
+                                    onChange={(vals) => {
                                         setFilterValues((fv) => ({ ...fv, [field]: vals }))
-                                    }
+                                        setPage(1); // reset to page 1
+                                        localStorage.setItem("doctorsPage", 1);
+                                    }}
                                     filterOption={(input, opt) =>
                                         opt.label.toLowerCase().includes(input.toLowerCase())
                                     }
@@ -550,7 +545,8 @@ export default function DoctorsView() {
                                 onChange: (newPage, newPageSize) => {
                                     setPage(newPage);
                                     setPageSize(newPageSize);
-                                    // persist when refreshing
+
+                                    // persist the page and pageSize
                                     localStorage.setItem("doctorsPage", newPage);
                                     localStorage.setItem("doctorsPageSize", newPageSize);
                                 },

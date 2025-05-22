@@ -36,10 +36,12 @@ async function seedDoctors() {
         const num_proposed_entries = Object.entries(block).length;
         for (CPSO_Number of Object.entries(block)) {
             const d = CPSO_Number[1];
+            const rawSpecialtiesString = d.specialties || '';
+            const specialtiesArray = rawSpecialtiesString.split('|').map(s => s.trim()); // trim removes whitespace before and after "   hello world  " -> "hello world"
             batch.push({
                 name: d.name,
                 cpsonumber: d.cpsonumber,
-                specialties: d.specialties,
+                specialties: specialtiesArray,
                 primaryaddressnotinpractice: d.primaryaddressnotinpractice,
                 street1: d.street1,
                 street2: d.street2,

@@ -8,6 +8,7 @@ router.post('/doctors', authenticateJWT, async (req, res) => {
     try {
         // NOSQL Injection Vulnerability
         // use validation middleware to prevent this
+        // need to split the specialties into array
         const doctor = new Doctor(req.body);
         await doctor.save();
         res.status(201).json(doctor);

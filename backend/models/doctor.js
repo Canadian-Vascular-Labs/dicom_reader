@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const doctorSchema = new mongoose.Schema({
     name: { type: String, required: true },
     cpsonumber: { type: String, required: true, unique: true },
-    specialties: { type: String, required: false, default: 'Not Specified' },
+    specialties: { type: [String], required: false, default: [] },
     primaryaddressnotinpractice: { type: Boolean, default: false },
     street1: { type: String, required: true },
     street2: { type: String },
