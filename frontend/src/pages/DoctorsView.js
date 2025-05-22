@@ -123,6 +123,7 @@ export default function DoctorsView() {
     const savedPage = Number(localStorage.getItem("doctorsPage")) || 1;
     const savedPageSize = Number(localStorage.getItem("doctorsPageSize")) || 50;
 
+    const [isDownloading, setIsDownloading] = useState(false);
     const [page, setPage] = useState(savedPage);
     const [pageSize, setPageSize] = useState(savedPageSize);
     const [totalDoctors, setTotalDoctors] = useState(0);
@@ -294,6 +295,7 @@ export default function DoctorsView() {
     // define exportToExcel function
     const exportToExcel = () => {
         if (!doctors.length) return;
+        setIsDownloading(true);
 
         // 1) gather all the keys
         const tableFields = columns.map((c) => c.dataIndex);
@@ -358,7 +360,10 @@ export default function DoctorsView() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        });
+        }).finally(() => {
+            setIsDownloading(false);
+        }
+        );
     };
     const totalWidth = columns.reduce((sum, c) => sum + (c.width || 100), 0);
 
@@ -427,6 +432,7 @@ export default function DoctorsView() {
                     type="primary"
                     onClick={exportToExcel} // whatever your CSV/Excel helper is
                     style={{ marginLeft: 16 }}
+                    loading={isDownloading}
                 >
                     Export to Excel
                 </Button>
