@@ -1,10 +1,11 @@
 // src/components/DoctorsView.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import {
     Descriptions,
     Button,
     Select,
+    Input,
     Space,
     Tag,
     Table,
@@ -31,7 +32,6 @@ const filterOptions = [
 // load labs
 // labs are dictionaries withing the dictionary with primary key: "LabFSAs"
 const { LabFSAs: labDict } = require("../data/fsa.json");
-
 
 // load list of all specialties and FSAs
 const { specialties: allSpecs } = require("../data/specialties.json");
@@ -120,14 +120,19 @@ const columns = [
 ];
 
 export default function DoctorsView() {
-    const [cpsoNumbers, setCpsoNumbers] = useState([]);
+    const savedPage = Number(localStorage.getItem("doctorsPage")) || 1;
+    const savedPageSize = Number(localStorage.getItem("doctorsPageSize")) || 50;
+
+    const [page, setPage] = useState(savedPage);
+    const [pageSize, setPageSize] = useState(savedPageSize);
+    const [totalDoctors, setTotalDoctors] = useState(0);
     const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterValues, setFilterValues] = useState({
         labfilter: [],
         fsa: [],
         specialties: [],
-        name: [],
+        name: "",
         inMailinglist: [],
     });
 
@@ -136,26 +141,46 @@ export default function DoctorsView() {
 
     const navigate = useNavigate();
 
-    // fetch once
+    //
     useEffect(() => {
-        fetchData("doctors/cpso", setCpsoNumbers, setLoading, navigate);
-        fetchData("doctors", setDoctors, setLoading, navigate);
         // set select all for default
         setFilterValues((fv) => ({
             ...fv,
             specialties: specialtyOptions.map((s) => s.value),
         }));
-    }, [navigate]);
+    }, []);
 
-
-    // use effect that checks if any doctors have inMailinglist = true
+    // change so name filter isnt sent to the backend
+    // fetch once
     useEffect(() => {
-        const inMailinglist = doctors.filter((doc) => doc.inMailinglist === true);
-        if (inMailinglist.length > 0) {
-            console.log("inMailinglist", inMailinglist);
-        }
-    }, [doctors]);
+        // fetchData("doctors/cpso", setCpsoNumbers, setLoading, navigate);
+        fetchData(
+            `doctors?page=${page}&pageSize=${pageSize}&filters=${JSON.stringify(
+                filterValues
+            )}`,
+            setLoading,
+            navigate
+        ).then((response) => {
+            setDoctors(response["data"]);
+            setTotalDoctors(response["total"]);
+            setPageSize(response["pageSize"] ?? 50);
+        });
 
+        // // set select all for default
+        // setFilterValues((fv) => ({
+        //     ...fv,
+        //     specialties: specialtyOptions.map((s) => s.value),
+        // }));
+    }, [navigate, page, pageSize, filterValues]);
+
+    // use effect to destructure the doctors array
+    useEffect(() => {
+        // if (doctors['data'].length > 0) {
+        // set the doctors array to the data array
+        console.log("doctors", doctors);
+        console.log("array:", doctors["data"]);
+        // }
+    }, [doctors]);
 
     // use effect to update FSA options when labfilter changes
     useEffect(() => {
@@ -171,6 +196,7 @@ export default function DoctorsView() {
         }
     }, [filterValues.labfilter]);
 
+    // use effect to update specialties when select_all is selected
     useEffect(() => {
         // if select_all is selected, set all specialties
         if (filterValues.specialties.includes("Select All")) {
@@ -186,13 +212,10 @@ export default function DoctorsView() {
                 specialties: fv.specialties.filter((s) => s !== "Select All"),
             }));
         }
-    }
-        , [filterValues.specialties]);
+    }, [filterValues.specialties]);
 
     const sortedLabs = React.useMemo(() => {
-        return [...filterValues.labfilter].sort((a, b) =>
-            a.localeCompare(b)
-        );
+        return [...filterValues.labfilter].sort((a, b) => a.localeCompare(b));
     }, [filterValues.labfilter]);
 
     const labKeys = React.useMemo(() => {
@@ -215,7 +238,6 @@ export default function DoctorsView() {
         return copy;
     }, [filterValues.fsa]);
 
-
     // ensure only one of True/False is selected for inMailinglist
     useEffect(() => {
         const selected = filterValues.inMailinglist;
@@ -225,17 +247,15 @@ export default function DoctorsView() {
                 inMailinglist: [selected[selected.length - 1]],
             }));
         }
-    }
-        , [filterValues.inMailinglist]);
+    }, [filterValues.inMailinglist]);
 
 
-    console.log("doctors[0]", doctors[0]);
     // helper: returns the doctors array filtered _only_ by all fields except `skipField`
     const doctorsMatchingOtherFilters = (skipField) => {
         return doctors.filter((doc) =>
             filterOptions
                 .map((o) => o.value)
-                .filter((f) => (f !== "name" && f !== "labfilter" && f !== skipField))
+                .filter((f) => f !== "name" && f !== "labfilter" && f !== skipField)
                 .every((field) => {
                     const selected = filterValues[field] || [];
                     if (!selected.length) return true;
@@ -257,7 +277,8 @@ export default function DoctorsView() {
                 label: lab,
             }));
         }
-        if (field === "inMailinglist") return ['True', 'False'].map((v) => ({ value: v, label: v }));
+        if (field === "inMailinglist")
+            return ["True", "False"].map((v) => ({ value: v, label: v }));
         if (field === "specialties") return specialtyOptions;
         if (field === "fsa") return fsaOptions;
         // for name, or any other dynamic field:
@@ -268,98 +289,76 @@ export default function DoctorsView() {
         return allVals.map((v) => ({ value: v, label: v }));
     };
 
-    // finally, apply _all_ filters to produce the table rows
-    const filteredDoctors = doctors.filter((doc) =>
-        // make a set of FSAs to check against
-        filterOptions.every(({ value: field }) => {
-            var selected = filterValues[field] || [];
-            if (field === "labfilter") {
-                // then we need to check the LabFSAVals
-                selected = labFSAVals || [];
-            }
-            if (!selected.length) return true;
-            if (field === "inMailinglist") {
-                const cell = doc.inMailinglist;
-                if (doc.inMailinglist === true) {
-                    // console.log("cell", cell);
-                }
-
-                // return docs with inMailinglist = selected
-                // make sure selected is only true or false
-
-                const selectedBool = selected[0] === "True" ? true : false;
-
-                return cell === selectedBool;
-            }
-            else {
-                const usePostalCode = field === "fsa" || field === "labfilter";
-                const cell = (doc[usePostalCode ? "postalcode" : field] ?? "")
-                    .toString()
-                    .toLowerCase();
-                return selected.some((val) => cell.includes(val.toLowerCase()));
-            }
-        })
-    );
-
     // CSV‐download
 
     // define exportToExcel function
     const exportToExcel = () => {
-        if (!filteredDoctors.length) return;
+        if (!doctors.length) return;
 
         // 1) gather all the keys
         const tableFields = columns.map((c) => c.dataIndex);
         const extraFields = Array.from(
             new Set(
-                filteredDoctors.flatMap((doc) =>
+                doctors.flatMap((doc) =>
                     Object.keys(doc).filter((k) => !tableFields.includes(k))
                 )
             )
         );
+        // query the backend for all the data matching the filters
+        fetchData(
+            `doctors?filters=${JSON.stringify(filterValues)}`,
+            setLoading,
+            navigate
+        ).then((response) => {
+            console.log("response", response);
+            const allDoctors = response["data"];
+            const totalDoctors = response["total"];
+            console.log(`Fetched ${totalDoctors} doctors for export: ${allDoctors}`);
 
-        // 2) final ordered list of all fields
-        const allFields = [...tableFields, ...extraFields];
+            // 2) final ordered list of all fields
+            const allFields = [...tableFields, ...extraFields];
 
-        // 3) header row: column titles (for the table fields) + raw key names (for extras)
-        const header = [
-            ...columns.map((c) => `"${c.title.replace(/"/g, '""')}"`),
-            ...extraFields.map((f) => `"${f.replace(/"/g, '""')}"`),
-        ].join(",");
+            // 3) header row: column titles (for the table fields) + raw key names (for extras)
+            const header = [
+                ...columns.map((c) => `"${c.title.replace(/"/g, '""')}"`),
+                ...extraFields.map((f) => `"${f.replace(/"/g, '""')}"`),
+            ].join(",");
 
-        // 4) build each data row
-        const rows = filteredDoctors.map((doc) =>
-            allFields
-                .map((field) => {
-                    let val = doc[field];
+            // 4) build each data row
+            const rows = allDoctors.map((doc) =>
+                allFields
+                    .map((field) => {
+                        let val = doc[field];
 
-                    // if it's an object/array, stringify it
-                    if (typeof val === "object") {
-                        val = JSON.stringify(val);
-                    }
-                    if (field === "phonenumber" || field === "fax") {
-                        // if it's a phone number, make sure no formatting is applied -- just the raw number
-                        val = val.replace(/[^0-9]/g, "");
-                    }
+                        // if it's an object/array, stringify it
+                        if (typeof val === "object") {
+                            val = JSON.stringify(val);
+                        }
+                        if (field === "phonenumber" || field === "fax") {
+                            // if it's a phone number, make sure no formatting is applied -- just the raw number
+                            val = val.replace(/[^0-9]/g, "");
+                        }
 
-                    // normalize undefined/null → empty string
-                    val = val == null ? "" : val;
+                        // normalize undefined/null → empty string
+                        val = val == null ? "" : val;
 
-                    // escape any quotes/newlines
-                    const escaped = String(val).replace(/"/g, '""');
-                    return `"${escaped}"`;
-                })
-                .join(",")
-        );
+                        // escape any quotes/newlines
+                        const escaped = String(val).replace(/"/g, '""');
+                        return `"${escaped}"`;
+                    })
+                    .join(",")
+            );
 
-        // 5) assemble CSV and trigger download
-        const csvContent = [header, ...rows].join("\r\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", "doctors_data.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            // 5) assemble CSV and trigger download
+            const csvContent = [header, ...rows].join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "doctors_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
     };
     const totalWidth = columns.reduce((sum, c) => sum + (c.width || 100), 0);
 
@@ -367,7 +366,6 @@ export default function DoctorsView() {
     const anyFilterSelected = Object.values(filterValues).some(
         (vals) => vals.length > 0
     );
-
 
     return (
         <div>
@@ -383,25 +381,46 @@ export default function DoctorsView() {
                 }}
             >
                 <Space wrap size="middle">
-                    {filterOptions.map(({ value: field, label }) => (
-                        <Select
-                            key={field}
-                            mode="multiple"
-                            allowClear
-                            showSearch
-                            placeholder={label}
-                            style={{ minWidth: 200 }}
-                            maxTagCount={2}
-                            options={getOptionsFor(field)}
-                            value={filterValues[field]}
-                            onChange={(vals) =>
-                                setFilterValues((fv) => ({ ...fv, [field]: vals }))
-                            }
-                            filterOption={(input, opt) =>
-                                opt.label.toLowerCase().includes(input.toLowerCase())
-                            }
-                        />
-                    ))}
+                    {filterOptions.map(({ value: field, label }) => {
+                        if (field === "name") {
+                            return (
+                                <Input
+                                    key={field}
+                                    placeholder={label}
+                                    style={{ minWidth: 200 }}
+                                    allowClear
+                                    value={filterValues[field] ?? ""}
+                                    onChange={(e) =>
+                                        setFilterValues((fv) => ({
+                                            ...fv,
+                                            [field]: e.target.value,
+                                        }))
+                                    }
+                                />
+                            )
+                        } else {
+                            return (
+                                <Select
+                                    key={field}
+                                    mode="multiple"
+                                    allowClear
+                                    showSearch
+                                    placeholder={label}
+                                    style={{ minWidth: 200 }}
+                                    maxTagCount={2}
+                                    disabled={field === "name"}
+                                    options={getOptionsFor(field)}
+                                    value={filterValues[field]}
+                                    onChange={(vals) =>
+                                        setFilterValues((fv) => ({ ...fv, [field]: vals }))
+                                    }
+                                    filterOption={(input, opt) =>
+                                        opt.label.toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                            );
+                        }
+                    })}
                 </Space>
 
                 <Button
@@ -415,15 +434,16 @@ export default function DoctorsView() {
 
             <Row gutter={16} align="top" wrap={false}>
                 {/* left column: FSAs */}
-                {anyFilterSelected ?
+                {anyFilterSelected ? (
                     <>
-
                         <Col flex="200px">
                             {/* show the selected labs and FSAs */}
-                            {filterValues.labfilter.length > 0 || filterValues.fsa.length > 0 ?
+                            {filterValues.labfilter.length > 0 ||
+                                filterValues.fsa.length > 0 ? (
                                 <>
-
-                                    <Typography.Title level={5}>Filtered Labs/FSAs</Typography.Title>
+                                    <Typography.Title level={5}>
+                                        Filtered Labs/FSAs
+                                    </Typography.Title>
                                     {/* inside the list for the lab, show the FSAs connected to it */}
                                     <List
                                         size="small"
@@ -445,88 +465,96 @@ export default function DoctorsView() {
                                         locale={{ emptyText: "None" }}
                                     />
                                 </>
-                                : null}
-
+                            ) : null}
 
                             {/* filtered specialties */}
-                            {filterValues.specialties.length > 0 ?
+                            {filterValues.specialties.length > 0 ? (
                                 <>
-
                                     <Typography.Title style={{ marginTop: 16 }} level={5}>
                                         Filtered Specialties
                                     </Typography.Title>
                                     <List
-
                                         size="small"
                                         bordered
                                         dataSource={filterValues.specialties.sort()}
-                                        renderItem={spec => (
+                                        renderItem={(spec) => (
                                             <List.Item
                                                 style={{
                                                     // padding: 1,                // reset the List.Item’s own padding
                                                     // marginLeft: 18,            // add a little left-gap
-                                                    border: 'none'                   // hide the inner item borders
+                                                    border: "none", // hide the inner item borders
                                                 }}
                                             >
                                                 <Tag color="blue">{spec}</Tag>
                                             </List.Item>
                                         )}
-                                        locale={{ emptyText: 'None' }}
+                                        locale={{ emptyText: "None" }}
                                         style={{
-                                            overflowY: 'auto',      // enable vertical scroll
+                                            overflowY: "auto", // enable vertical scroll
                                         }}
-
                                     />
                                 </>
-                                : null}
+                            ) : null}
 
                             {/* filtered names */}
-                            {filterValues.name.length > 0 ?
+                            {filterValues.name > 1 ? (
                                 <>
-
                                     <Typography.Title style={{ marginTop: 16 }} level={5}>
                                         Filtered Names
                                     </Typography.Title>
                                     <List
-
                                         size="small"
                                         bordered
                                         dataSource={filterValues.name.sort()}
-                                        renderItem={name => (
+                                        renderItem={(name) => (
                                             <List.Item
                                                 style={{
                                                     // padding: 1,                // reset the List.Item’s own padding
                                                     // marginLeft: 18,            // add a little left-gap
-                                                    border: 'none'                   // hide the inner item borders
+                                                    border: "none", // hide the inner item borders
                                                 }}
                                             >
                                                 <Tag color="blue">{name}</Tag>
                                             </List.Item>
                                         )}
-                                        locale={{ emptyText: 'None' }}
+                                        locale={{ emptyText: "None" }}
                                         style={{
-                                            overflowY: 'auto',      // enable vertical scroll
+                                            overflowY: "auto", // enable vertical scroll
                                         }}
                                     />
                                 </>
-                                : null}
+                            ) : null}
                         </Col>
                     </>
-                    : null}
+                ) : null}
                 {/* right column: table */}
-                <Col flex="auto" style={{ overflowX: 'auto' }}>
-                    <Table
-                        dataSource={filteredDoctors}
-                        columns={columns}
-                        loading={loading}
-                        rowKey="cpsonumber"
-                        pagination={{ pageSize: 100 }}
-                        // still let the table itself handle wide content
-                        scroll={{ x: totalWidth }}
-                    />
-                </Col>
+                {true && (
+                    <Col flex="auto" style={{ overflowX: "auto" }}>
+                        <Table
+                            dataSource={doctors}
+                            columns={columns}
+                            loading={loading}
+                            rowKey="cpsonumber"
+                            pagination={{
+                                current: page,
+                                pageSize: pageSize,
+                                total: totalDoctors,
+                                showTotal: (total, range) =>
+                                    `${range[0]}-${range[1]} of ${total} items`,
+                                onChange: (newPage, newPageSize) => {
+                                    setPage(newPage);
+                                    setPageSize(newPageSize);
+                                    // persist when refreshing
+                                    localStorage.setItem("doctorsPage", newPage);
+                                    localStorage.setItem("doctorsPageSize", newPageSize);
+                                },
+                            }}
+                            // still let the table itself handle wide content
+                            scroll={{ x: totalWidth }}
+                        />
+                    </Col>
+                )}
             </Row>
-
         </div>
     );
 }

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 
-export const fetchData = async (resource, setData, setLoading, navigate) => {
+export const fetchData = async (resource, setLoading, navigate) => {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -16,12 +16,14 @@ export const fetchData = async (resource, setData, setLoading, navigate) => {
             },
         });
 
-        setData(response.data);
+        const payload = response.data;
+        return payload;
     } catch (error) {
         console.error(`Error fetching ${resource}:`, error);
         if (error.response && error.response.status === 401) {
             navigate('/login');
         }
+        return null;
     } finally {
         setLoading(false);
     }

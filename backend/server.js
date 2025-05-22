@@ -43,10 +43,10 @@ const connectDB = require('./config/db');
 connectDB();
 
 // Seed the database with dummy data
-if (process.env.NODE_ENV === 'development') {
-    const seedData = require('./seed.cjs');
-    seedData();
-}
+// if (process.env.NODE_ENV === 'development') {
+const seedData = require('./seed.cjs');
+seedData();
+// }
 
 // Default route (root)
 app.get('/', (req, res) => {
