@@ -19,9 +19,10 @@ const LoginPage = () => {
 
     // Validation schema for form inputs
     const validationSchema = Yup.object().shape({
-        email: Yup.string()
-            .email('Invalid email address')
-            .required('Email is required'),
+        username: Yup.string()
+            .min(3, 'Username must be at least 3 characters')
+            .max(20, 'Username cannot exceed 20 characters')
+            .required('Username is required'),
         password: Yup.string()
             .min(6, 'Password must be at least 6 characters')
             .required('Password is required'),
@@ -31,8 +32,11 @@ const LoginPage = () => {
     const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
         try {
             console.log('Submitting login form:', values);
-            console.log('API URL:', `${API_BASE_URL}/api/auth/login`);
-            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, values);
+
+            // http://127.0.0.1:8000/api/cpso/login
+            const AUTH_URL = `${API_BASE_URL}/api/cpso/login`;
+            console.log('API URL:', AUTH_URL);
+            const response = await axios.post(AUTH_URL, values);
 
             // Store the JWT token in local storage
             localStorage.setItem('token', response.data.token);
@@ -55,20 +59,20 @@ const LoginPage = () => {
             <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
                 <Formik
-                    initialValues={{ email: '', password: '' }}
+                    initialValues={{ username: '', password: '' }}
                     validationSchema={validationSchema}
                     onSubmit={handleSubmit}
                 >
                     {({ isSubmitting, errors }) => (
                         <Form>
                             <div className="mb-4">
-                                <label className="block text-gray-700 font-semibold mb-2">Email</label>
+                                <label className="block text-gray-700 font-semibold mb-2">Username</label>
                                 <Field
-                                    name="email"
-                                    type="email"
+                                    name="username"
+                                    type="text"
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
-                                <ErrorMessage name="email" component="div" className="text-red-500 text-sm mt-2" />
+                                <ErrorMessage name="username" component="div" className="text-red-500 text-sm mt-2" />
                             </div>
                             <div className="mb-6">
                                 <label className="block text-gray-700 font-semibold mb-2">Password</label>

@@ -6,6 +6,8 @@ import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
+    // react.StrictMode is a tool for highlighting potential problems in an application,
+    // mounts, unmounts, and remounts components in development mode.
     <React.StrictMode>
         <App />
     </React.StrictMode>

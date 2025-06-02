@@ -1,30 +1,74 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ─────── Python artifacts ───────
+# Virtual environments
+.venv/
+env/
+venv/
 
-# dependencies
+# Byte‐compiled / optimized / DLL files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite database (Django default, or similar)
+*.sqlite3
+
+# Django migrations (optional—if you commit them you can remove this)
+# **/migrations/
+# **/migrations/*.py
+# **/migrations/*.py[co]
+
+# ─────── Node / JavaScript artifacts ───────
+# Node modules (for any nested backend/frontend)
 node_modules/
-/.pnp
+**/node_modules/
+
+# Build folders (CRA, Next.js, etc.)
+build/
+dist/
+ `.next`/
+out/
+
+# Package‐lock (if you prefer yarn.lock instead)
+package-lock.json
+yarn.lock
+.pnpm‐lock.yaml
+
+# Yarn v2+ PnP artifacts
+.pnp
 .pnp.js
 
-package-lock.json
+# ─────── Environment / Config ───────
+# dotenv environment files
+.env
+.env.*
+!.env.example
 
-# testing
-/coverage
+# Vercel / Netlify
+.vercel/
+.netlify/
+firebase.json
 
-# production
-/build
-
-# misc
+# macOS Finder metadata
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
+# Logs and debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+*.log
 
+# Coverage reports
+coverage/
+**/coverage/
 
-# secrets
-.env
-.vercel
+# IDE / Editor folders (optional: add your own)
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Miscellaneous
+*.bak
+*.tmp

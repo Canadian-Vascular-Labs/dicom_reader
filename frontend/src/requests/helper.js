@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import qs from 'qs';
 
-export const fetchData = async (resource, setLoading, navigate) => {
+export const fetchData = async (resource, params, setLoading, navigate) => {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -14,9 +15,12 @@ export const fetchData = async (resource, setLoading, navigate) => {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
+            params: params,
+            paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' }),
         });
 
         const payload = response.data;
+        // console.log(`Fetched data from ${resource}:`, payload);
         return payload;
     } catch (error) {
         console.error(`Error fetching ${resource}:`, error);

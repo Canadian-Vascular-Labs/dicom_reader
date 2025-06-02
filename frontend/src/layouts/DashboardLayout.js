@@ -14,9 +14,6 @@ const { Header, Content, Footer, Sider } = Layout;
 const DashboardLayout = () => {
     const logout = async () => {
         try {
-            console.log("URL: ", `${API_BASE_URL}/api/auth/logout`);
-            // Call the backend API to clear the token
-            await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
             localStorage.removeItem('token');
             navigate('/');
         } catch (error) {
