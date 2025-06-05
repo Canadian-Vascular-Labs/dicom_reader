@@ -1,0 +1,21 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": "password123",
+    "role": "ADMIN",
+    "is_superuser": true
+  },
+  {
+    "username": "hr_user1",
+    "email": "hr_user1@example.com",
+    "password": "password123",
+    "role": "HR"
+  },
+  {
+    "username": "employee1",
+    "email": "employee1@example.com",
+    "password": "password123",
+    "role": "EMPLOYEE"
+  }
+]

@@ -1,11 +1,10 @@
 from django.db.models import Q
-from ninja import NinjaAPI, Query
+from ninja import NinjaAPI, Query, Router
 from ninja.pagination import paginate, LimitOffsetPagination
 from ninja.errors import HttpError
 
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 import jwt
 
 from datetime import datetime, timedelta, timezone
@@ -18,10 +17,12 @@ import cpso.schemas as schemas
 from cpso.auth import GlobalAuth
 import re
 
-api = NinjaAPI(auth=GlobalAuth())
+# api = NinjaAPI(auth=GlobalAuth())
+
+router = Router(tags=["cpso"])
 
 
-@api.post("/login", auth=None, response=TokenSchema)
+@router.post("/login", auth=None, response=TokenSchema)
 def login_view(request, payload: schemas.SignInSchema):
     print(f"Login attempt with user: {payload.username}")
     user = authenticate(request, username=payload.username, password=payload.password)
@@ -47,7 +48,7 @@ def login_view(request, payload: schemas.SignInSchema):
     return 200, TokenSchema(token=token)
 
 
-@api.get("/doctors", response=List[schemas.DoctorSchema])
+@router.get("/doctors", response=List[schemas.DoctorSchema])
 @paginate(LimitOffsetPagination)
 def list_doctors(
     request,
@@ -97,8 +98,18 @@ def list_doctors(
     return qs
 
 
+# endpoint for returning array of cpso numbers
+@router.get("/doctors/fetch-{prefix}", response=List[str])
+def list_doctor_cpso_numbers(request, prefix: str):
+    return list(
+        Doctor.objects.filter(cpso_number__startswith=prefix).values_list(
+            "cpso_number", flat=True
+        )
+    )
+
+
 # example detail endpoint
-@api.get("/doctors/{cpso}", response=schemas.DoctorSchema)
+@router.get("/doctors/{cpso}", response=schemas.DoctorSchema)
 def get_doctor(request, cpso: str):
     return Doctor.objects.prefetch_related("specialties", "addresses").get(
         cpso_number=cpso
@@ -106,6 +117,6 @@ def get_doctor(request, cpso: str):
 
 
 # endpoint to get all specialties
-@api.get("/specialties", response=List[schemas.SpecialtySchema])
+@router.get("/specialties", response=List[schemas.SpecialtySchema])
 def list_specialties(request):
     return Specialty.objects.all()

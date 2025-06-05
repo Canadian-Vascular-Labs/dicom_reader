@@ -1,21 +1,25 @@
 // src/components/FilterPanel.jsx
 import React from 'react';
 import { Divider, Space, Input, Select } from 'antd';
+import CPSOFilter from './CPSOFilter';
+
 const { Option } = Select;
 
 
-
 export default function FilterPanel({ filters, onFilterChange, optionsMap }) {
-    // console.log('filters:', filters);
+    console.log('filters:', filters);
+
     return (
         <Space wrap size="middle" style={{ marginBottom: 16 }}>
+            <CPSOFilter />
             {filters.map(({ id, value, label }) => {
                 return (
-                    <Select
+                    < Select
                         key={id}
                         // set mode to multiple if the id is not 'inMailingList'
                         // otherwise set it to 'default'
-                        mode={id === 'inMailingList' ? 'default' : 'multiple'}
+                        mode={id === 'inMailingList' ? 'default' : 'multiple'
+                        }
                         allowClear
                         showSearch
                         placeholder={label}

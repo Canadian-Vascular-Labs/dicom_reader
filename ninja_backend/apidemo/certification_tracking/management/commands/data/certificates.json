@@ -1,0 +1,432 @@
+{
+  "All Employees": [
+    {
+      "name": "Performance Review",
+      "description": "3 months and then annually",
+      "valid_period": 365,
+      "type": "IM"
+    },
+    {
+      "name": "Emergency Contact",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "Government ID",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Confidentiality Agreement",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "Police Check",
+      "description": "Renew annually, must be CRIMINAL check -- renew every 5 years",
+      "valid_period": 1825,
+      "type": "RC"
+    },
+    {
+      "name": "Policy and Procedure Manual",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Quality Assurance Manual",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Privacy and Cybersecurity Certificate",
+      "description": "Privacy and Security Training for the Health Care Sector - Register an account to complete -- renew every 3 years",
+      "url": "https://www.ontariomd.ca/products-and-services/privacy-and-training-resources",
+      "valid_period": 1095,
+      "type": "EQ"
+    },
+    {
+      "name": "Patient-Centered Care and Ethics Training",
+      "description": "Training on patient-centered care and ethics -- renew every 3 years",
+      "url": "https://docs.google.com/presentation/d/1JX_t-Ka0xGEOSGq9ODrEo9Q_Mp8hKm6oygVvA9pBttE/edit#slide=id.p1",
+      "valid_period": 1095,
+      "type": "IQ"
+    },
+    {
+      "name": "Radiation Safety Training",
+      "description": "Distributed by Radiation Safety Officer -- renew annually",
+      "valid_period": 365,
+      "type": "IQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Disinfection",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Introduction to Reprocessing",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Loading a Sterilizer",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Packaging for Sterilization",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Personal Protective Equipment",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Pre-cleaning and Cleaning and Post-cleaning",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Steam Sterilization",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Transportation and Storage",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Reprocessing in Community Health Care Settings: Unloading a Sterilizer",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/Reprocessing/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Chain of Transmission and Risk Assessment",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Routine Practices: Health Care Provider Controls",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Control of the Environment",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Additional Precautions",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Administrative Controls",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Occupational Health and Safety",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "IPAC Core Competencies: Personal Risk Assessment in Community Care Clinic",
+      "description": "renew every 5 years",
+      "url": "https://www.publichealthontario.ca/en/LearningAndDevelopment/OnlineLearning/InfectiousDiseases/IPAC-Core-Competencies/Pages/Course.aspx",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Enviornmental Cleaning",
+      "description": "Renew annually",
+      "url": "https://www.publichealthontario.ca/en/health-topics/infection-prevention-control/environmental-cleaning/environmental-cleaning-toolkit",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Additonal Precautions",
+      "description": "Renew annually",
+      "url": "https://www.publichealthontario.ca/en/health-topics/infection-prevention-control/routine-practices-additional-precautions/",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Just Clean Your Hands (JCYH)",
+      "description": "Renew annually",
+      "url": [
+        "https://www.publichealthontario.ca/en/Videos/C/2021/COVID-19-4-Hand-Hygiene",
+        "https://www.publichealthontario.ca/en/Health-Topics/Infection-Prevention-Control/Hand-Hygiene/JCYH-Videos"
+      ],
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Donning and Doffing PPE",
+      "description": "Renew annually",
+      "url": [
+        "https://www.publichealthontario.ca/en/Videos/I/2021/IPAC-FullPPE-On",
+        "https://www.publichealthontario.ca/en/Videos/I/2021/IPAC-FullPPE-Off"
+      ],
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Work Place Safety (WPS)(Non-Mangement Staff)",
+      "description": "Renew every 3 years",
+      "url": "https://www.labour.gov.on.ca/english/hs/elearn/worker/foursteps.php",
+      "valid_period": 1095,
+      "type": "EQ"
+    },
+    {
+      "name": "Work Place Safety for Supervisors (WPS) (Manager and Team Leads)",
+      "description": "Renew every 3 years",
+      "url": "https://www.ontario.ca/page/supervisor-health-and-safety-awareness-five-steps",
+      "valid_period": 1095,
+      "type": "EQ"
+    },
+    {
+      "name": "Accessibility for Ontarians with Disabilities Act",
+      "description": "renew every 5 years",
+      "url": "https://www3.ohrc.on.ca/en/learning/working-together-code-and-aoda/certificate-version",
+      "valid_period": 1825,
+      "type": "EQ"
+    },
+    {
+      "name": "Workplace Hazardous Materials Information System (WHMIS)",
+      "description": "Renew every 3 years",
+      "url": "https://aixsafety.com/wp-content/uploads/articulate_uploads/WHS-Apr2025Aix/story.html",
+      "valid_period": 1095,
+      "type": "EQ"
+    },
+    {
+      "name": "Workplace Violence and Harassment Training",
+      "description": "Renew every 3 years",
+      "url": "https://docs.google.com/presentation/d/1T_CJIhN4TIUBfsxnzV07cpjk_teGIxEeSZe1n6nccMQ/edit?usp=sharing",
+      "valid_period": 1095,
+      "type": "EQ"
+    }
+  ],
+  "DMS Staff": [
+    {
+      "name": "CMRITO VERIFICATION (my Page)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "IM"
+    },
+    {
+      "name": "Nuchal Translucency Certificate (if applicable - some General DMS)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Born NTQA Curve Submission (NT Techs only)",
+      "description": "Renew bi-annually",
+      "valid_period": 182,
+      "type": "RC"
+    },
+    {
+      "name": "Medical Directive (General DMS only)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "List of Studies Perfomed and Booking Times",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "Probe Competency Training",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "EQ"
+    },
+    {
+      "name": "Sonography Canada Membership (if applicable)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "ARDMS VERIFICATION (if applicable)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "BLS (Basic Life Support)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Liability Insurance (if applicable)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "How to Clean Your Ultrasound Machine",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Ultrasound Protocols",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Competency_Peer Review",
+      "description": "Renew bi-annually",
+      "valid_period": 182,
+      "type": "DF"
+    }
+  ],
+  "MRT_R": [
+    {
+      "name": "CMRITO VERIFICATION (my Page)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "IM"
+    },
+    {
+      "name": "Ontario Association of Radiologists Bone Mineral Densitometry Certificate (BMD staff only)",
+      "description": "Renew every 5 years",
+      "valid_period": 1825,
+      "type": "RC"
+    },
+    {
+      "name": "List of Studies Perfomed and Booking Times",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "BLS (Basic Life Support)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Liability Insurance (if applicable)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "X-Ray Machine Quality Control",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "X-Ray Protocols",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Competency_Peer Review",
+      "description": "Renew bi-annually",
+      "valid_period": 182,
+      "type": "DF"
+    },
+    {
+      "name": "Dose Equivalency Agreement",
+      "description": "When Hired (Dont renew?)",
+      "type": "DF"
+    }
+  ],
+  "MRT_N": [
+    {
+      "name": "Medical Directive",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "DF"
+    },
+    {
+      "name": "CMRITO VERIFICATION (my Page)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "IM"
+    },
+    {
+      "name": "Radiation Safety Officer Training Certificate (if applicable)",
+      "description": "Renew every 3 years",
+      "valid_period": 1095,
+      "type": "RC"
+    },
+    {
+      "name": "BLS (Basic Life Support)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Liability Insurance (if applicable)",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "RC"
+    },
+    {
+      "name": "Nuclear Equipment Quality Control",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Nuclear Medicine Protocols",
+      "description": "Renew annually",
+      "valid_period": 365,
+      "type": "AT"
+    },
+    {
+      "name": "Competency_Peer Review",
+      "description": "Renew bi-annually",
+      "valid_period": 182,
+      "type": "DF"
+    }
+  ]
+}

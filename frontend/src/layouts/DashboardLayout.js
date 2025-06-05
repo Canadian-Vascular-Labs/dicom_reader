@@ -49,6 +49,14 @@ const DashboardLayout = () => {
             key: '1',
             label: <Link to="/dashboard/doctors">Doctors View</Link>, // Links to Doctors View
         },
+        {
+            key: '2',
+            label: <Link to="/dashboard/employees">Employee View</Link>, // Links to Employee View
+        },
+        {
+            key: '3',
+            label: <Link to="/dashboard/hr">HR View</Link>, // Links to HR View
+        },
     ];
 
     const logoutItem = {
@@ -85,7 +93,7 @@ const DashboardLayout = () => {
                 <Menu
                     theme="dark"
                     mode="horizontal"
-                    defaultSelectedKeys={['2']}
+                    defaultSelectedKeys={['1']}
                     items={items1}
                     style={{
                         flex: 1,

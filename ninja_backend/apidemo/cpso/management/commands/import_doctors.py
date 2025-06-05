@@ -6,34 +6,28 @@ from cpso.models import Doctor, Specialty, Address
 
 
 class Command(BaseCommand):
+    created = 0
+    updated = 0
     help = "Import CPSO doctor records from a JSON file"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "json_file", type=str, help="Path to the JSON file containing doctor data"
+            "json_files",
+            nargs="+",
+            type=str,
+            help="Path to the JSON file containing doctor data",
         )
 
-    def handle(self, *args, **options):
-        json_path = options["json_file"]
-
-        if not os.path.exists(json_path):
-            raise CommandError(f"File not found: {json_path}")
-
-        with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        created = 0
-        updated = 0
-
+    def import_data(self, data):
         with transaction.atomic():
             for cpsonumber, info in data.items():
                 # Normalize fields safely
                 name = (info.get("name") or "").strip()
-                total_addresses = (
-                    info.get("additionaladdresscount", 0) + 1
-                )  # +1 for primary address
-                specialties = info.get("specialties") or []
-                total_specialties = len(specialties.split("|")) if specialties else 0
+                # total_addresses = (
+                #     info.get("additionaladdresscount", 0) + 1
+                # )  # +1 for primary address
+                # specialties = info.get("specialties") or []
+                # total_specialties = len(specialties.split("|")) if specialties else 0
                 # print(f"Specialties: {specialties}, len: {total_specialties}")
 
                 # Create or update Doctor
@@ -41,15 +35,15 @@ class Command(BaseCommand):
                     cpso_number=cpsonumber,
                     defaults={
                         "name": name,
-                        "total_addresses": total_addresses,
-                        "specialties_count": total_specialties,
+                        # "total_addresses": total_addresses,
+                        # "specialties_count": total_specialties,
                     },
                 )
 
                 if was_created:
-                    created += 1
+                    self.created += 1
                 else:
-                    updated += 1
+                    self.updated += 1
 
                 # Specialties
                 doctor.specialties.clear()
@@ -102,8 +96,22 @@ class Command(BaseCommand):
                         },
                     )
 
+    def handle(self, *args, **options):
+        json_paths = options["json_files"]
+        for json_path in json_paths:
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    print(f"Importing from {json_path}...")
+                    self.import_data(data)
+            except FileNotFoundError:
+                self.stderr.write(self.style.ERROR(f"File not found: {json_path}"))
+                continue
+            except json.JSONDecodeError as e:
+                self.stderr.write(self.style.ERROR(f"Invalid JSON in {json_path}: {e}"))
+                continue
         self.stdout.write(
             self.style.SUCCESS(
-                f"Import complete: {created} created, {updated} updated."
+                f"Import complete: {self.created} created, {self.updated} updated."
             )
         )

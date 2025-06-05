@@ -68,6 +68,7 @@ const columns = [
 export default function DoctorsView() {
     const savedPage = Number(localStorage.getItem("doctorsPage")) || 1;
     const savedPageSize = Number(localStorage.getItem("doctorsPageSize")) || 50;
+    const [cpsoNumbers, setCpsoNumbers] = useState([]);
 
     const [page, setPage] = useState(savedPage);
     const [pageSize, setPageSize] = useState(savedPageSize);
@@ -76,6 +77,7 @@ export default function DoctorsView() {
     const [loading, setLoading] = useState(true);
     const [doctors, setDoctors] = React.useState([]);
     const [filters, setFilters] = useState([
+        // { id: "cpso", value: [], label: "CPSO Number" },
         { id: "labs", value: [], label: "Labs" },
         { id: "fsa", value: [], label: "Location" },
         { id: "specialty", value: [], label: "Specialty" },
@@ -203,7 +205,6 @@ export default function DoctorsView() {
         }
     }, [fetchDoctors, filters, page]);
 
-
     // general useEffect to load initial data on component mount
     useEffect(() => {
         loadLocations();
@@ -227,6 +228,7 @@ export default function DoctorsView() {
                 { value: "Yes", label: "Yes" },
                 { value: "No", label: "No" },
             ],
+            cpso: [],
         });
 
     }, [specialties]);

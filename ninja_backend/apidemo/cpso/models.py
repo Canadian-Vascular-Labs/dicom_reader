@@ -40,4 +40,4 @@ class Address(models.Model):
     )
 
     def __str__(self):
-        return f"{self.street_1}, {self.city}, {self.province}, {self.postal_code}, {self.country} -- ({self.doctor.name})"
+        return f"{self.street_1}, {self.city}, {self.province}, {self.postal_code} -- ({self.doctor.name})"
