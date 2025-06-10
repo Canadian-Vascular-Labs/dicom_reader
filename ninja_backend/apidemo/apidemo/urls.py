@@ -15,7 +15,7 @@ api = NinjaAPI(
 )
 
 api.add_router("/cpso/", cpso_router)
-api.add_router("/certification_tracking/", certification_tracking_router)
+# api.add_router("/certification_tracking/", certification_tracking_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
