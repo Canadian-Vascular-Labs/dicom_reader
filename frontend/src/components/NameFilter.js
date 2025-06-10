@@ -6,13 +6,11 @@ import { fetchData } from "../requests/helper";
 
 const { Option } = Select;
 
-const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
-    // console.log("CPSOFilter: filter:", filter);
+const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
+    // console.log("NameFilter:", filter);
     const [inputValue, setinputValue] = useState(""); // current text in the search box
     const [fetching, setFetching] = useState(false);
-    const [cpsoNumbers, setCpsoNumbers] = useState([]);
-    // console.log("CPSOFilter: cpsoNumbers:", cpsoNumbers);
-
+    const [names, setNames] = useState([]);
 
     /*
      *    Wrap in  debounce so it only fires after 300ms since the last keystroke
@@ -20,36 +18,31 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
      */
     const debouncedFetch = useCallback(
         debounce(async (query) => {
-            // if (!query) {
-            //     // If the search box is empty, clear out options and stop loading:
-            //     setCpsoNumbers([]);
-            //     setFetching(false);
-            //     return;
-            // }
 
             setFetching(true);
             try {
                 if (!query) {
                     // If the search box is empty, clear out options and stop loading:
-                    setCpsoNumbers([]);
+                    setNames([]);
                     setFetching(false);
                     return;
+
                 }
-                const url = `cpso/doctors/fetch-${query}`;
+                const url = `cpso/doctors/name-${query}`;
 
                 const data = await fetchData(url, {}, setFetching, () => { });
                 if (Array.isArray(data)) {
-                    const mapped = data.map((cpsoNumber) => ({
-                        value: cpsoNumber,
-                        label: cpsoNumber,
+                    const mapped = data.map((name) => ({
+                        value: name,
+                        label: name,
                     }));
-                    setCpsoNumbers(mapped);
+                    setNames(mapped);
                 } else {
-                    setCpsoNumbers([]);
+                    setNames([]);
                 }
             } catch (err) {
-                console.error("Error fetching CPSO numbers:", err);
-                setCpsoNumbers([]);
+                console.error("Error fetching names from API:", err);
+                setNames([]);
             } finally {
                 setFetching(false);
             }
@@ -82,12 +75,6 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
      * 7) This is called *when the user selects or clears* items from the dropdown.
      *    We forward the selected values to a parent (if provided).
      */
-    const handleChange = (selectedValues) => {
-        console.log("Selected CPSO numbers:", selectedValues);
-        if (onSelectChange) {
-            onSelectChange(selectedValues);
-        }
-    };
 
     return (
         <Select
@@ -96,14 +83,14 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
             showSearch
             maxTagCount={2}
             filterOption={false}               // turn off client‐side filtering
-            placeholder="Search CPSO numbers..."
+            placeholder="Search names..."
             notFoundContent={fetching ? <Spin size="small" /> : null}
             onSearch={handleSearch}           // called on typing, passes the search text
             onChange={vals => onFilterChange(filter.id, vals)}           // called on selection/clear, passes array of values
             style={{ minWidth: 200 }}
-            options={cpsoNumbers}             // the fetched [{ label, value }] array
+            options={names}             // the fetched [{ label, value }] array
         />
     );
 };
 
-export default CPSOFilter;
+export default NameFilter;

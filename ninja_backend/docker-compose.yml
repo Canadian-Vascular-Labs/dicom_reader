@@ -1,0 +1,35 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+  web:
+    build: .
+    working_dir: /app/apidemo
+    command: bash -c "while true; do sleep 1000; done"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app/apidemo
+
+  celery:
+    build: .
+    working_dir: /app/apidemo
+    command: >
+      bash -c "watchmedo auto-restart --directory=../ --pattern=*.py --recursive -- celery -A apidemo worker --loglevel=info"
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app/apidemo
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

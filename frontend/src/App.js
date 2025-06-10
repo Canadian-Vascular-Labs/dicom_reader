@@ -6,6 +6,7 @@ import { Navigate } from 'react-router-dom';
 import DoctorsView from './pages/DoctorsView';
 import EmployeeView from './pages/EmployeeView';
 import HRView from './pages/HRView';
+import ImportCPSOView from './pages/ImportCPSOView';
 
 // ProtectedRoute Component to check authentication
 const ProtectedRoute = ({ children }) => {
@@ -37,6 +38,7 @@ const App = () => (
             >
                 <Route index element={<Navigate to="doctors" />} />
                 <Route path="doctors" element={<DoctorsView />} />
+                <Route path="import-cpso" element={<ImportCPSOView />} />
                 <Route path="employees" element={<EmployeeView />} />
                 <Route path="hr" element={<HRView />} />
             </Route>

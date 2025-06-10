@@ -1,0 +1,19 @@
+Django>=5.0
+celery>=5.3
+redis>=5.0
+gunicorn
+python-dotenv
+django-cors-headers
+django-ninja
+PyJWT
+ninja-schema
+watchdog
+uvloop
+asyncio
+# pip install httpx[http2]
+httpx
+httpx[http2]
+rich
+demjson3
+beautifulsoup4
+lxml

@@ -1,20 +1,31 @@
 // src/components/FilterPanel.jsx
 import React from 'react';
-import { Divider, Space, Input, Select } from 'antd';
+import { Divider, Space, Input, Select, Button } from 'antd';
 import CPSOFilter from './CPSOFilter';
+import NameFilter from './NameFilter';
 
 const { Option } = Select;
 
+export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors }) {
+    // console.log('filters:', filters);
+    const cpso_filter = filters.find(filter => filter.id === "cpso");
+    const name_filter = filters.find(filter => filter.id === "name");
+    const other_filters = filters.filter(filter => filter.id !== "cpso" && filter.id !== "name");
 
-export default function FilterPanel({ filters, onFilterChange, optionsMap }) {
-    console.log('filters:', filters);
+    const resetFilters = () => {
+        filters.forEach(filter => {
+            onFilterChange(filter.id, filter.defaultValue || []);
+        });
+    };
 
     return (
         <Space wrap size="middle" style={{ marginBottom: 16 }}>
-            <CPSOFilter />
-            {filters.map(({ id, value, label }) => {
+            <CPSOFilter filter={cpso_filter} onFilterChange={onFilterChange} />
+            <NameFilter filter={name_filter} onFilterChange={onFilterChange} />
+            {other_filters.map(({ id, value, label }) => {
                 return (
-                    < Select
+                    <Select
+                        disabled={id === 'inMailingList'}
                         key={id}
                         // set mode to multiple if the id is not 'inMailingList'
                         // otherwise set it to 'default'
@@ -34,6 +45,24 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap }) {
                     />
                 );
             })}
+            <Button
+                type="primary"
+                onClick={() => loadDoctors()}
+                style={{ marginLeft: 8 }}
+            >
+                Apply Filters
+            </Button>
+            <Button
+                type="primary"
+                onClick={resetFilters}
+                style={{ marginLeft: 8 }}
+            >
+                Reset Filters
+            </Button>
+            <Button
+                disabled>
+                Save Filters
+            </Button>
         </Space>
     );
 }

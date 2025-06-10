@@ -1,0 +1,19 @@
+{
+  "name": "CPSO Backend Dev (Docker Compose)",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "web",
+  "workspaceFolder": "/app",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-azuretools.vscode-docker"],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt",
+  "runServices": ["web", "celery", "redis"],
+  "shutdownAction": "stopCompose",
+  "overrideCommand": false
+}

@@ -4,6 +4,7 @@ import { Table, Descriptions, Row, Col } from "antd";
 import FilterPanel from "../components/FilterPanel";
 import FilterSideBar from "../components/FilterSideBar";
 import { set } from "mongoose";
+import ImportCPSOView from "./ImportCPSOView";
 // import DoctorsView from './pages/DoctorsView';
 
 const columns = [
@@ -46,23 +47,24 @@ const columns = [
                 {addresses.map((addr, index) => (
                     <span key={index}>
                         {/* only take first three letters of postal code*/}
-                        {addr.postal_code.slice(0, 3)}
+                        {/* {addr.postal_code.slice(0, 3)} */}
+                        {addr.postal_code}
                         {index < addresses.length - 1 ? ", " : ""}
                     </span>
                 ))}
             </span>
         ),
     },
-    {
-        title: "In Mailing List",
-        dataIndex: "in_mailing_list",
-        key: "is_on_mailing_list",
-        width: 100,
-        ellipsis: true,
-        render: (inMailingList) => (
-            <span>{inMailingList ? "Yes" : "No"}</span>
-        ),
-    },
+    // {
+    //     title: "In Mailing List",
+    //     dataIndex: "in_mailing_list",
+    //     key: "is_on_mailing_list",
+    //     width: 100,
+    //     ellipsis: true,
+    //     render: (inMailingList) => (
+    //         <span>{inMailingList ? "Yes" : "No"}</span>
+    //     ),
+    // },
 ];
 
 export default function DoctorsView() {
@@ -77,9 +79,10 @@ export default function DoctorsView() {
     const [loading, setLoading] = useState(true);
     const [doctors, setDoctors] = React.useState([]);
     const [filters, setFilters] = useState([
-        // { id: "cpso", value: [], label: "CPSO Number" },
+        { id: "name", value: [], label: "Name" },
+        { id: "cpso", value: [], label: "CPSO Number" },
         { id: "labs", value: [], label: "Labs" },
-        { id: "fsa", value: [], label: "Location" },
+        { id: "fsa", value: [], label: "FSA" },
         { id: "specialty", value: [], label: "Specialty" },
         { id: "inMailingList", value: [], label: "In Mailing List" },
     ]);
@@ -110,10 +113,25 @@ export default function DoctorsView() {
         }
     }, []);
 
+    const fetchLocations = useCallback(async () => {
+        try {
+            const data = await fetchData("cpso/locations", {}, setLoading, () => { });
+            if (!data) {
+                console.error("Failed to fetch locations data");
+                return null;
+            }
+            return data;
+        } catch (error) {
+            console.error("Error fetching locations:", error);
+            return null;
+        }
+    }, []);
+
 
     const loadSpecialties = useCallback(async () => {
         console.log("Loading specialties from API + JSON...");
         const data = await fetchSpecialties();
+        // console.log("Specialties data loaded:", data);
         const jsonData = require("../data/specialties.json");
 
         const otherSpecs = data
@@ -121,6 +139,14 @@ export default function DoctorsView() {
             .filter((spec) => !jsonData.specialties.some((s) => s === spec))
 
         const specialty_array = [
+            {
+                label: <span>Mass Selection Options</span>,
+                title: "Mass Selection Options",
+                options: [
+                    { value: "defaults", label: "Select All (Defaults)" },
+                    { value: "all", label: "Select All (+ Other)" },
+                ],
+            },
             {
                 label: <span>Main Specialties</span>,
                 title: "Main Specialties",
@@ -143,18 +169,36 @@ export default function DoctorsView() {
 
     }, [fetchSpecialties]);
 
-    // load labs from JSON file
-    const loadLocations = () => {
-        console.log("Loading JSON data for lab FSAs...");
-        const jsonData = require("../data/fsa.json");
-        setFSAs(jsonData.FSAs.map((fsa) => ({
-            value: fsa,
-            label: fsa,
-        })).sort((a, b) => a.label.localeCompare(b.label))
-            || []);
 
+    // load labs from JSON file
+    const loadLocations = useCallback(async () => {
+        const jsonData = require("../data/fsa.json");
         setLabs(jsonData.LabFSAs || {});
-    };
+
+        console.log("Loading JSON data for lab FSAs...");
+        const data = await fetchLocations();
+        // console.log("Locations data loaded:", data);
+
+        // data: [{id: 1, FSA: "A1A"}, {id: 2, FSA: "B2B"}, ...]
+        // setFSAs to an array of objects with value and label properties
+        // e.g. [{ value: "A1A", label: "A1A" }, { value: "B2B", label: "B2B" }, ...]
+        const new_data = data.map((location) => ({
+            value: location.FSA,
+            label: location.FSA,
+        })).sort((a, b) => a.label.localeCompare(b.label));
+        // console.log("FSAs loaded:", new_data);
+        setFSAs(new_data);
+
+
+
+        // setFSAs((data).map((location) => ({
+        //     value: location.FSA,
+        //     label: location.FSA,
+        // })) // .sort((a, b) => a.FSA.localeCompare(b.FSA))
+        //     || []);
+        // // .sort((a, b) => a.FSA.localeCompare(b.FSA)) || []);
+
+    }, [fetchLocations]);
 
     const fetchDoctors = useCallback(async (params) => {
         try {
@@ -181,12 +225,34 @@ export default function DoctorsView() {
             .flatMap((labKey) => labs[labKey] ?? []) ?? [];
 
         const allFSAs_unique = Array.from(new Set([...fsaValues, ...labFsaValues]));
-
         const specialtyFilter = filters.find((f) => f.id === "specialty");
+
+        if (specialtyFilter.value.includes("defaults")) {
+            specialtyFilter.value = specialties
+                .find((s) => s.title === "Main Specialties")
+                .options.map((o) => o.value);
+        }
+        else if (specialtyFilter.value.includes("all")) {
+            specialtyFilter.value = specialties
+                .filter((s) => s.title !== "Mass Selection Options")
+                .flatMap((s) => s.options.map((o) => o.value));
+        }
+
+
+
+
+        const cpsoFilter = filters.find((f) => f.id === "cpso");
+        const NameFilter = filters.find((f) => f.id === "name");
         const params = {
             ...(allFSAs_unique?.length && { include_FSAs: allFSAs_unique }),
             ...(specialtyFilter?.value?.length && {
                 include_specialties: specialtyFilter.value,
+            }),
+            ...(cpsoFilter?.value?.length && {
+                include_CPSOs: cpsoFilter.value,
+            }),
+            ...(NameFilter?.value?.length && {
+                include_names: NameFilter.value,
             }),
             include_mailing_list: filters.find(
                 (f) => f.id === "inMailingList"
@@ -197,18 +263,20 @@ export default function DoctorsView() {
         };
         const data = await fetchDoctors(params);
         if (data) {
+            // console.log("Total doctors fetched:", data.count);
             setDoctors(data);
             setTotalDoctors(data.count || 0);
             // console.log("Doctors data loaded:", data);
         } else {
             console.error("Failed to fetch doctors data");
         }
-    }, [fetchDoctors, filters, page]);
+    }, [filters, fetchDoctors, page]);
 
     // general useEffect to load initial data on component mount
     useEffect(() => {
         loadLocations();
         loadSpecialties(); // calls setSpecialties to contain the array of main/other specialties
+        loadDoctors(); // fetch doctors data based on current filters
     }, []);
 
     // create optionsMap for the filters (happens after specialties are loaded from initial load)
@@ -254,10 +322,10 @@ export default function DoctorsView() {
                 return f.value && f.value.trim() !== "";
             }
         );
-        setIsSideBarVisible(isVisible);
+        setIsSideBarVisible(true);
 
         // make sure this fetches the lab FSAs as well!!
-        loadDoctors(); // fetch doctors data based on current filters
+        // loadDoctors(); // fetch doctors data based on current filters
 
     }, [filters, page])
 
@@ -265,24 +333,20 @@ export default function DoctorsView() {
 
 
     const handleFilterChange = (id, newValue) => {
-        // console.log(`Filter change for ${id}:`, newValue);
+        console.log(`Filter change for ${id}:`, newValue);
         setFilters((f) =>
             f.map((x) => (x.id === id ? { ...x, value: newValue } : x))
         );
         setPage(1); // reset to first page on filter change
     };
-
     return (
         <div>
             <FilterPanel
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 optionsMap={optionsMap}
+                loadDoctors={loadDoctors}
             />
-            <div style={{ marginBottom: 16 }}>
-                {/* Hello, currently fetched {total_doctors} doctors -- but there are{" "} */}
-                {/* {doctors["count"]} total matching filtered criteria. */}
-            </div>
 
             <Row gutter={16} align="top" wrap={false}>
                 {isSideBarVisible && (
@@ -304,7 +368,7 @@ export default function DoctorsView() {
                         dataSource={doctors.items || []}
                         columns={columns}
                         loading={loading}
-                        rowKey="cpsonumber"
+                        rowKey="cpso_number"
                         pagination={{
                             current: page,
                             pageSize: pageSize,

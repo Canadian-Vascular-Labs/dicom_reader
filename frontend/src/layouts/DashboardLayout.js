@@ -12,9 +12,15 @@ const { Header, Content, Footer, Sider } = Layout;
 
 // Layout component
 const DashboardLayout = () => {
+    // fetch selectedIndex from local storage or set default to '1'
+    const storedIndex = localStorage.getItem('selectedIndex');
+    const [selectedIndex, setSelectedIndex] = React.useState(storedIndex || '1');
+
     const logout = async () => {
         try {
-            localStorage.removeItem('token');
+            // localStorage.removeItem('token');
+            // remove all other user-related data from local storage if needed
+            localStorage.clear();
             navigate('/');
         } catch (error) {
             console.error('Error logging out:', error);
@@ -51,10 +57,14 @@ const DashboardLayout = () => {
         },
         {
             key: '2',
-            label: <Link to="/dashboard/employees">Employee View</Link>, // Links to Employee View
+            label: <Link to="/dashboard/import-cpso">Import CPSO</Link>, // Links to Import CPSO
         },
         {
             key: '3',
+            label: <Link to="/dashboard/employees">Employee View</Link>, // Links to Employee View
+        },
+        {
+            key: '4',
             label: <Link to="/dashboard/hr">HR View</Link>, // Links to HR View
         },
     ];
@@ -93,7 +103,8 @@ const DashboardLayout = () => {
                 <Menu
                     theme="dark"
                     mode="horizontal"
-                    defaultSelectedKeys={['1']}
+                    onClick={({ key }) => { setSelectedIndex(key); localStorage.setItem('selectedIndex', key); }}
+                    defaultSelectedKeys={selectedIndex}
                     items={items1}
                     style={{
                         flex: 1,
