@@ -1,5 +1,5 @@
 // src/components/CPSOFilter.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, use } from "react";
 import { Select, Spin } from "antd";
 import debounce from "lodash/debounce";
 import { fetchData } from "../requests/helper";
@@ -13,7 +13,12 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
     const [cpsoNumbers, setCpsoNumbers] = useState([]);
     // console.log("CPSOFilter: cpsoNumbers:", cpsoNumbers);
 
-
+    useEffect(() => {
+        if (filter.value.length == 0) {
+            setinputValue("");
+            setCpsoNumbers([]);
+        }
+    }, [filter]);
     /*
      *    Wrap in  debounce so it only fires after 300ms since the last keystroke
      *    if the user types again before 300ms, the old call is cancelled and a new 300ms timer starts.
@@ -78,17 +83,6 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
         setinputValue(newSearch);
     };
 
-    /**
-     * 7) This is called *when the user selects or clears* items from the dropdown.
-     *    We forward the selected values to a parent (if provided).
-     */
-    const handleChange = (selectedValues) => {
-        console.log("Selected CPSO numbers:", selectedValues);
-        if (onSelectChange) {
-            onSelectChange(selectedValues);
-        }
-    };
-
     return (
         <Select
             mode="multiple"
@@ -102,6 +96,7 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
             onChange={vals => onFilterChange(filter.id, vals)}           // called on selection/clear, passes array of values
             style={{ minWidth: 200 }}
             options={cpsoNumbers}             // the fetched [{ label, value }] array
+            value={filter.value} // controlled value from the parent
         />
     );
 };

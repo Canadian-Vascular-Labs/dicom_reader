@@ -1,0 +1,34 @@
+# docker-compose.yml
+# version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: myregistry.azurecr.io/cpso-stack-backend:latest
+    env_file:
+      - backend/src/.env.prod
+    ports:
+      - "8000:8000"
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers=3 --timeout=60
+  
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: myregistry.azurecr.io/cpso-stack-celery:latest
+    env_file:
+      - backend/src/.env.prod
+    command: celery -A core worker --loglevel=info
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: myregistry.azurecr.io/cpso-stack-frontend:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - frontend/.env
+    command: sh -c "npm run build && npx serve -s build -l 3000"
+  

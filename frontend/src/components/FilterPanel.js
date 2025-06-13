@@ -6,7 +6,7 @@ import NameFilter from './NameFilter';
 
 const { Option } = Select;
 
-export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors }) {
+export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors, setPage }) {
     // console.log('filters:', filters);
     const cpso_filter = filters.find(filter => filter.id === "cpso");
     const name_filter = filters.find(filter => filter.id === "name");
@@ -19,51 +19,59 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
     };
 
     return (
-        <Space wrap size="middle" style={{ marginBottom: 16 }}>
-            <CPSOFilter filter={cpso_filter} onFilterChange={onFilterChange} />
-            <NameFilter filter={name_filter} onFilterChange={onFilterChange} />
-            {other_filters.map(({ id, value, label }) => {
-                return (
-                    <Select
-                        disabled={id === 'inMailingList'}
-                        key={id}
-                        // set mode to multiple if the id is not 'inMailingList'
-                        // otherwise set it to 'default'
-                        mode={id === 'inMailingList' ? 'default' : 'multiple'
-                        }
-                        allowClear
-                        showSearch
-                        placeholder={label}
-                        // only show the first 2 selected options in the input box
-                        maxTagCount={2}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <CPSOFilter filter={cpso_filter} onFilterChange={onFilterChange} />
+                <NameFilter filter={name_filter} onFilterChange={onFilterChange} />
+                {other_filters.map(({ id, value, label }) => {
+                    return (
+                        <Select
+                            disabled={id === 'inMailingList'}
+                            key={id}
+                            // set mode to multiple if the id is not 'inMailingList'
+                            // otherwise set it to 'default'
+                            mode={id === 'inMailingList' ? 'default' : 'multiple'
+                            }
+                            allowClear
+                            showSearch
+                            placeholder={label}
+                            // only show the first 2 selected options in the input box
+                            maxTagCount={2}
 
-                        style={{ minWidth: 200 }}
-                        value={value}
-                        options={optionsMap[id] || []}
-                        onChange={vals => onFilterChange(id, vals)}
-                        optionFilterProp='label'
-                    />
-                );
-            })}
-            <Button
-                type="primary"
-                onClick={() => loadDoctors()}
-                style={{ marginLeft: 8 }}
-            >
-                Apply Filters
-            </Button>
-            <Button
-                type="primary"
-                onClick={resetFilters}
-                style={{ marginLeft: 8 }}
-            >
-                Reset Filters
-            </Button>
-            <Button
-                disabled>
-                Save Filters
-            </Button>
-        </Space>
+                            style={{ minWidth: 200 }}
+                            value={value}
+                            options={optionsMap[id] || []}
+                            onChange={vals => onFilterChange(id, vals)}
+                            optionFilterProp='label'
+                        />
+                    );
+                })}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <Button
+                    type="primary"
+                    onClick={() => {
+                        loadDoctors();
+                        setPage(1); // Reset to the first page when applying filters
+                    }}
+                    style={{ marginLeft: 8 }}
+                >
+                    Apply Filters
+                </Button>
+                <Button
+                    type="primary"
+                    onClick={resetFilters}
+                    style={{ marginLeft: 8 }}
+                >
+                    Reset Filters
+                </Button>
+                <Button
+                    disabled>
+                    Save Filters
+                </Button>
+            </div>
+
+        </div >
     );
 }
 

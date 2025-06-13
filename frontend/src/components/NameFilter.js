@@ -12,6 +12,13 @@ const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
     const [fetching, setFetching] = useState(false);
     const [names, setNames] = useState([]);
 
+    useEffect(() => {
+        if (filter.value.length == 0) {
+            setinputValue("");
+            setNames([]);
+        }
+    }, [filter]);
+
     /*
      *    Wrap in  debounce so it only fires after 300ms since the last keystroke
      *    if the user types again before 300ms, the old call is cancelled and a new 300ms timer starts.
@@ -89,6 +96,7 @@ const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
             onChange={vals => onFilterChange(filter.id, vals)}           // called on selection/clear, passes array of values
             style={{ minWidth: 200 }}
             options={names}             // the fetched [{ label, value }] array
+            value={filter.value} // controlled value from the filter prop
         />
     );
 };

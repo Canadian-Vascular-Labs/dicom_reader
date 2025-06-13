@@ -1,5 +1,5 @@
 import React, { useState, useEffect, use, useCallback, useMemo } from "react";
-import { fetchData } from "../requests/helper";
+import { fetchData, isValidPostalCode } from "../requests/helper";
 import { Table, Descriptions, Row, Col } from "antd";
 import FilterPanel from "../components/FilterPanel";
 import FilterSideBar from "../components/FilterSideBar";
@@ -44,12 +44,13 @@ const columns = [
         ellipsis: true,
         render: (addresses) => (
             <span>
-                {addresses.map((addr, index) => (
+                {addresses.filter(addr => isValidPostalCode(addr.postal_code)).map((addr, index) => (
                     <span key={index}>
-                        {/* only take first three letters of postal code*/}
-                        {/* {addr.postal_code.slice(0, 3)} */}
-                        {addr.postal_code}
-                        {index < addresses.length - 1 ? ", " : ""}
+                        {/* skip if not valid postal code */}
+                        <span style={{}}>
+                            {addr.postal_code}
+                            {index < addresses.length - 1 ? ", " : ""}
+                        </span>
                     </span>
                 ))}
             </span>
@@ -87,7 +88,7 @@ export default function DoctorsView() {
         { id: "inMailingList", value: [], label: "In Mailing List" },
     ]);
     const [columnSize, setColumnSize] = useState(200);
-    const [isSideBarVisible, setIsSideBarVisible] = useState(false);
+    const [isSideBarVisible, setIsSideBarVisible] = useState(true);
     const [specialties, setSpecialties] = useState([]);
     const [FSAs, setFSAs] = useState({});
     const [labs, setLabs] = useState([]);
@@ -181,7 +182,7 @@ export default function DoctorsView() {
 
         // data: [{id: 1, FSA: "A1A"}, {id: 2, FSA: "B2B"}, ...]
         // setFSAs to an array of objects with value and label properties
-        // e.g. [{ value: "A1A", label: "A1A" }, { value: "B2B", label: "B2B" }, ...]
+        // e.g. [{value: "A1A", label: "A1A" }, {value: "B2B", label: "B2B" }, ...]
         const new_data = data.map((location) => ({
             value: location.FSA,
             label: location.FSA,
@@ -270,7 +271,7 @@ export default function DoctorsView() {
         } else {
             console.error("Failed to fetch doctors data");
         }
-    }, [filters, fetchDoctors, page]);
+    }, [filters, fetchDoctors, page, pageSize]);
 
     // general useEffect to load initial data on component mount
     useEffect(() => {
@@ -304,30 +305,22 @@ export default function DoctorsView() {
     // useEffect to load doctors data when filters or page changes
     useEffect(() => {
         // update column size based on string length of the longest filter value
-        const maxWidth = filters
-            .filter((f) => f.id === "specialty") // filter out "FSA" since they're always length 3
-            .reduce((max, filterGroup) => {
-                const groupMax = filterGroup.value.reduce((groupMax, option) => {
-                    return Math.max(groupMax, option.length * 8); // Assuming each character is roughly 8px wide
-                }, 0);
-                return Math.max(max, groupMax);
-            }, 200);
-        setColumnSize(maxWidth); // add some padding
+        // const maxWidth = filters
+        //     .filter((f) => f.id === "specialty") // filter out "FSA" since they're always length 3
+        //     .reduce((max, filterGroup) => {
+        //         const groupMax = filterGroup.value.reduce((groupMax, option) => {
+        //             return Math.max(groupMax, option.length * 8); // Assuming each character is roughly 8px wide
+        //         }, 0);
+        //         return Math.max(max, groupMax);
+        //     }, 200);
+        // setColumnSize(maxWidth); // add some padding
         // set isSideBarVisible to true if there are filters applied
-        const isVisible = filters.some(
-            (f) => {
-                if (Array.isArray(f.value)) {
-                    return f.value.length > 0;
-                }
-                return f.value && f.value.trim() !== "";
-            }
-        );
-        setIsSideBarVisible(true);
 
         // make sure this fetches the lab FSAs as well!!
-        // loadDoctors(); // fetch doctors data based on current filters
+        console.log("PAGE CHANGE: Loading doctors!");
+        loadDoctors(); // fetch doctors data based on current filters
 
-    }, [filters, page])
+    }, [pageSize, page])
 
 
 
@@ -337,7 +330,7 @@ export default function DoctorsView() {
         setFilters((f) =>
             f.map((x) => (x.id === id ? { ...x, value: newValue } : x))
         );
-        setPage(1); // reset to first page on filter change
+        // setPage(1); // reset to first page on filter change
     };
     return (
         <div>
@@ -346,6 +339,7 @@ export default function DoctorsView() {
                 onFilterChange={handleFilterChange}
                 optionsMap={optionsMap}
                 loadDoctors={loadDoctors}
+                setPage={setPage}
             />
 
             <Row gutter={16} align="top" wrap={false}>

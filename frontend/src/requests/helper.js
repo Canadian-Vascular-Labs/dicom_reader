@@ -62,8 +62,14 @@ const postData = async (resource, data, setLoading, navigate) => {
     }
 }
 
+const isValidPostalCode = (postalCode) => {
+    // Canadian postal code regex
+    const regex = /^[A-Za-z]\d[A-Za-z] ?\d[A-Za-z]\d$/;
+    return regex.test(postalCode);
+};
 
-export { fetchData, postData };
+
+export { fetchData, postData, isValidPostalCode };
 export default {
     fetchData,
     postData

@@ -1,0 +1,61 @@
+# docker-compose.yml
+# version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  celery:
+    env_file: backend/src/.env
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      bash -c "watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- celery -A core worker --loglevel=info"
+    volumes:
+      - ./backend/src:/app
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app/src
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: ["npm", "start"]
+    ports:
+      - "3000:3000"
+    env_file:
+      - frontend/.env
+    volumes:
+      - ./frontend:/app
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: bash -c "python manage.py runserver 0.0.0:8000"
+    volumes:
+      - ./backend/src:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - PYTHONPATH=/app/backend/src
+  postgres:
+    image: postgres:15
+    ports:
+      - "${DB_PORT:-5434}:5432"
+    env_file:
+      - backend/src/.env
+    environment:
+      POSTGRES_DB: cvl_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
