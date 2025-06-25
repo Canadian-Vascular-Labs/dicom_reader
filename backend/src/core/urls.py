@@ -16,7 +16,7 @@ api = NinjaAPI(
 )
 
 api.add_router("/cpso/", cpso_router)
-# api.add_router("/certification_tracking/", certification_tracking_router)
+api.add_router("/certification_tracking/", certification_tracking_router)
 
 def index(request):
     return HttpResponse("Backend API is running.")
