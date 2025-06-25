@@ -81,6 +81,8 @@ MIDDLEWARE = [
 # CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://cvl-frontend-prod.bluecliff-e0b4ae10.canadacentral.azurecontainerapps.io",
+    "https://app.cvl-solutions.ca",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -115,10 +117,13 @@ else:
             "NAME": os.getenv("DB_NAME", "my_django_db"),
             "USER": os.getenv("DB_USER", "my_django_user"),
             "PASSWORD": os.getenv("DB_PASS", "my_django_password"),
-            "HOST": "host.docker.internal",  # because your Postgres runs in Docker, Django runs in devcontainer
+            # "HOST": "host.docker.internal",  # because your Postgres runs in Docker, Django runs in devcontainer
+            "HOST": 'localhost',  # use 'localhost' for local development
             "PORT": os.getenv("DB_PORT", "5434"),
         }
     }
+
+
 
 
 # REDIS

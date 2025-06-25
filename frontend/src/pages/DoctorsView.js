@@ -6,6 +6,8 @@ import FilterSideBar from "../components/FilterSideBar";
 import { set } from "mongoose";
 import ImportCPSOView from "./ImportCPSOView";
 // import DoctorsView from './pages/DoctorsView';
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 const columns = [
     {
@@ -72,6 +74,7 @@ export default function DoctorsView() {
     const savedPage = Number(localStorage.getItem("doctorsPage")) || 1;
     const savedPageSize = Number(localStorage.getItem("doctorsPageSize")) || 50;
     const [cpsoNumbers, setCpsoNumbers] = useState([]);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     const [page, setPage] = useState(savedPage);
     const [pageSize, setPageSize] = useState(savedPageSize);
@@ -98,6 +101,44 @@ export default function DoctorsView() {
     });
     const [totalDoctors, setTotalDoctors] = useState(0);
 
+    const buildDoctorQueryParams = ({ overrideLimit = null } = {}) => {
+        const fsaFilter = filters.find((f) => f.id === "fsa");
+        const fsaValues = fsaFilter?.value ?? [];
+
+        const labFsaValues = filters
+            .find((f) => f.id === "labs")
+            ?.value
+            .flatMap((labKey) => labs[labKey] ?? []) ?? [];
+
+        const allFSAs_unique = Array.from(new Set([...fsaValues, ...labFsaValues]));
+
+        const specialtyFilter = filters.find((f) => f.id === "specialty");
+
+        let specialtyValues = specialtyFilter?.value ?? [];
+        if (specialtyValues.includes("defaults")) {
+            specialtyValues = specialties
+                .find((s) => s.title === "Main Specialties")
+                .options.map((o) => o.value);
+        } else if (specialtyValues.includes("all")) {
+            specialtyValues = specialties
+                .filter((s) => s.title !== "Mass Selection Options")
+                .flatMap((s) => s.options.map((o) => o.value));
+        }
+
+        const cpsoFilter = filters.find((f) => f.id === "cpso");
+        const NameFilter = filters.find((f) => f.id === "name");
+
+        return {
+            ...(allFSAs_unique.length && { include_FSAs: allFSAs_unique }),
+            ...(specialtyValues.length && { include_specialties: specialtyValues }),
+            ...(cpsoFilter?.value?.length && { include_CPSOs: cpsoFilter.value }),
+            ...(NameFilter?.value?.length && { include_names: NameFilter.value }),
+            include_mailing_list:
+                filters.find((f) => f.id === "inMailingList")?.value === "Yes",
+            offset: overrideLimit != null ? 0 : (page - 1) * pageSize,
+            limit: overrideLimit ?? pageSize,
+        };
+    };
 
 
     const fetchSpecialties = useCallback(async () => {
@@ -215,55 +256,16 @@ export default function DoctorsView() {
         }
     }, []);
 
-    const loadDoctors = useCallback(async () => {
+    const loadDoctors = useCallback(async (limit = pageSize) => {
         console.log("param::Loading doctors from API...");
-        const fsaFilter = filters.find((f) => f.id === "fsa");
-        const fsaValues = fsaFilter?.value ?? [];
-
-        const labFsaValues = filters
-            .find((f) => f.id === "labs")
-            ?.value             // e.g. ["Markham", "Thornhill"]
-            .flatMap((labKey) => labs[labKey] ?? []) ?? [];
-
-        const allFSAs_unique = Array.from(new Set([...fsaValues, ...labFsaValues]));
-        const specialtyFilter = filters.find((f) => f.id === "specialty");
-
-        if (specialtyFilter.value.includes("defaults")) {
-            specialtyFilter.value = specialties
-                .find((s) => s.title === "Main Specialties")
-                .options.map((o) => o.value);
-        }
-        else if (specialtyFilter.value.includes("all")) {
-            specialtyFilter.value = specialties
-                .filter((s) => s.title !== "Mass Selection Options")
-                .flatMap((s) => s.options.map((o) => o.value));
-        }
-
-
-
-
-        const cpsoFilter = filters.find((f) => f.id === "cpso");
-        const NameFilter = filters.find((f) => f.id === "name");
-        const params = {
-            ...(allFSAs_unique?.length && { include_FSAs: allFSAs_unique }),
-            ...(specialtyFilter?.value?.length && {
-                include_specialties: specialtyFilter.value,
-            }),
-            ...(cpsoFilter?.value?.length && {
-                include_CPSOs: cpsoFilter.value,
-            }),
-            ...(NameFilter?.value?.length && {
-                include_names: NameFilter.value,
-            }),
-            include_mailing_list: filters.find(
-                (f) => f.id === "inMailingList"
-            )?.value == "Yes" ? true : false,
-
-            offset: (page - 1) * pageSize,
-            limit: pageSize,
-        };
+        const params = buildDoctorQueryParams({
+            overrideLimit: limit, // use the current page size
+        });
         const data = await fetchDoctors(params);
         if (data) {
+            if (limit != pageSize) {
+                return data; // if limit is not pageSize, return the data directly
+            }
             // console.log("Total doctors fetched:", data.count);
             setDoctors(data);
             setTotalDoctors(data.count || 0);
@@ -272,6 +274,124 @@ export default function DoctorsView() {
             console.error("Failed to fetch doctors data");
         }
     }, [filters, fetchDoctors, page, pageSize]);
+
+
+    const formatAddress = (address) => {
+        const {
+            street_1,
+            street_2,
+            street_3,
+            street_4,
+            city,
+            province,
+            postal_code,
+            phone_number,
+            fax_number,
+        } = address;
+
+        const streetParts = [street_1, street_2, street_3, street_4].filter(Boolean);
+        const streetLine = streetParts.join("\n");
+
+        const cityLine = [city, province].filter(Boolean).join(" ");
+        const postalCodeLine = postal_code ? postal_code.toUpperCase() : "";
+        // apply some formatting to the phone and fax numbers if needed
+
+
+        return {
+            address: `${streetLine}\n${cityLine}\n${postalCodeLine}`,
+            phone_number: phone_number ? phone_number.replace(/[^0-9]/g, "") : "",
+            fax_number: fax_number ? fax_number.replace(/[^0-9]/g, "") : "",
+        };
+    };
+
+
+
+    const exportToExcel = useCallback(async () => {
+        setIsDownloading(true);
+
+        const max_to_load = 20000;
+        const data = await loadDoctors(max_to_load).then((data) => {
+            setIsDownloading(false);
+            return data;
+        });
+
+        if (data.length === 0) return;
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Doctors");
+
+        // Define columns
+        worksheet.columns = [
+            { header: "CPSO Number", key: "cpso" },
+            { header: "LName", key: "last" },
+            { header: "FName", key: "first" },
+            { header: "Specialties", key: "specialties" },
+            { header: "Address", key: "addr1" },
+            { header: "City", key: "city" },
+            { header: "FSA", key: "fsa" },
+            { header: "Address2", key: "addr2" },
+            { header: "Address3", key: "addr3" },
+            { header: "Address4", key: "addr4" },
+            { header: "Postal Code", key: "postal" },
+            { header: "Primary Phone Number", key: "phone" },
+            { header: "Primary Fax Number", key: "fax" },
+        ];
+        for (const doc of data.items) {
+            const nameParts = doc.name.split(", ");
+            const last = nameParts[0] || "";
+            const first = nameParts[1] || "";
+            const postalCode = doc.addresses[0]?.postal_code || "";
+            const city = doc.addresses[0]?.city || "";
+            const addresses = doc.addresses
+                .filter((addr) => isValidPostalCode(addr.postal_code))
+                .map((addr) => formatAddress(addr));
+
+            // console.log("Addresses:", addresses);
+
+            worksheet.addRow({
+                cpso: doc.cpso_number,
+                last,
+                first,
+                specialties: doc.specialties.map((s) => s.name).join("\n"),
+                addr1: addresses[0]?.address || "",
+                city: city,
+                fsa: postalCode.slice(0, 3).toUpperCase(),
+                addr2: addresses[1]?.address || "",
+                addr3: addresses[2]?.address || "",
+                addr4: addresses[3]?.address || "",
+                postal: postalCode.toUpperCase(),
+                phone: addresses[0]?.phone_number || "",
+                fax: addresses[0]?.fax_number || "",
+            });
+        }
+
+        // Apply vertical alignment + wrapText to all cells
+        worksheet.eachRow((row) => {
+            row.eachCell((cell) => {
+                cell.alignment = {
+                    vertical: "top",
+                    wrapText: true,
+                };
+            });
+        });
+
+        worksheet.columns.forEach((column) => {
+            let maxLength = 10; // minimum width
+
+            column.eachCell({ includeEmpty: true }, (cell) => {
+                const cellValue = cell.value ? cell.value.toString() : "";
+                const lines = cellValue.split("\n");
+                const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+                maxLength = Math.max(maxLength, longestLine);
+            });
+
+            column.width = maxLength + 2; // add padding
+        });
+
+        const blob = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([blob]), "doctors_data.xlsx");
+    }, [loadDoctors]);
+
 
     // general useEffect to load initial data on component mount
     useEffect(() => {
@@ -338,6 +458,8 @@ export default function DoctorsView() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 optionsMap={optionsMap}
+                exportToExcel={exportToExcel}
+                excelIsDownloading={isDownloading}
                 loadDoctors={loadDoctors}
                 setPage={setPage}
             />

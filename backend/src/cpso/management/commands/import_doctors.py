@@ -3,12 +3,23 @@ import os
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from cpso.models import Doctor, Specialty, Address
+import glob
 
 
 class Command(BaseCommand):
     created = 0
     updated = 0
     help = "Import CPSO doctor records from a JSON file"
+
+    def safe_trim(self, value, max_length=100):
+        if value is None:
+            return ""
+            
+        return (value or "").strip()[:max_length]
+
+    # Example usage
+    # "street_3": safe_trim(info.get("street3"))
+
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -53,10 +64,10 @@ class Command(BaseCommand):
                     doctor.specialties.add(specialty)
 
                 # Primary address
-                street1 = (info.get("street1") or "").strip()
-                city = (info.get("city") or "").strip()
-                province = (info.get("province") or "").strip()
-                postal_code = (info.get("postalcode") or "").strip()
+                street1 = self.safe_trim(info.get("street1"))
+                city = self.safe_trim(info.get("city"))
+                province = self.safe_trim(info.get("province"))
+                postal_code = self.safe_trim(info.get("postalcode"))
 
                 Address.objects.update_or_create(
                     doctor=doctor,
@@ -65,20 +76,20 @@ class Command(BaseCommand):
                     province=province,
                     postal_code=postal_code,
                     defaults={
-                        "street_2": (info.get("street2") or "").strip() or None,
-                        "street_3": (info.get("street3") or "").strip() or None,
-                        "street_4": (info.get("street4") or "").strip() or None,
-                        "phone_number": (info.get("phonenumber") or "").strip() or None,
-                        "fax_number": (info.get("fax") or "").strip() or None,
+                        "street_2": self.safe_trim(info.get("street2")),
+                        "street_3": self.safe_trim(info.get("street3")),
+                        "street_4": self.safe_trim(info.get("street4")),
+                        "phone_number": self.safe_trim(info.get("phonenumber")),
+                        "fax_number": self.safe_trim(info.get("fax")),
                     },
                 )
 
                 # Additional addresses
                 for addr in info.get("additionalAddresses") or []:
-                    a_street1 = (addr.get("street1") or "").strip()
-                    a_city = (addr.get("city") or "").strip()
-                    a_province = (addr.get("province") or "").strip()
-                    a_postal = (addr.get("postalcode") or "").strip()
+                    a_street1 = self.safe_trim(addr.get("street1")) 
+                    a_city = self.safe_trim(addr.get("city")) 
+                    a_province = self.safe_trim(addr.get("province")) 
+                    a_postal = self.safe_trim(addr.get("postalcode")) 
 
                     Address.objects.update_or_create(
                         doctor=doctor,
@@ -87,17 +98,26 @@ class Command(BaseCommand):
                         province=a_province,
                         postal_code=a_postal,
                         defaults={
-                            "street_2": (addr.get("street2") or "").strip() or None,
-                            "street_3": (addr.get("street3") or "").strip() or None,
-                            "street_4": (addr.get("street4") or "").strip() or None,
-                            "phone_number": (addr.get("phonenumber") or "").strip()
-                            or None,
-                            "fax_number": (addr.get("fax") or "").strip() or None,
+                            "street_2": self.safe_trim(addr.get("street2")),
+                            "street_3": self.safe_trim(addr.get("street3")),
+                            "street_4": self.safe_trim(addr.get("street4")),
+                            "phone_number": self.safe_trim(addr.get("phonenumber")),
+                            "fax_number": self.safe_trim(addr.get("fax")),
                         },
                     )
 
     def handle(self, *args, **options):
-        json_paths = options["json_files"]
+        json_inputs = options["json_files"]
+        json_paths = []
+
+        for path in json_inputs:
+            if os.path.isdir(path):
+                # Add all .json files in the directory
+                json_paths.extend(glob.glob(os.path.join(path, "*.json")))
+            else:
+                json_paths.append(path)
+
+
         for json_path in json_paths:
             try:
                 with open(json_path, "r", encoding="utf-8") as f:

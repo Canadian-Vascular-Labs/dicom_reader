@@ -10,11 +10,11 @@ services:
     env_file: backend/src/.env
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.celery
     command: >
       bash -c "watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- celery -A core worker --loglevel=info"
-    volumes:
-      - ./backend/src:/app
+    # volumes:
+    #   - ./backend/src:/app
     depends_on:
       - redis
     environment:
@@ -35,9 +35,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # dummy command to make sure the container runs indefinitely
+    # command: ["tail", "-f", "/dev/null"]
     command: bash -c "python manage.py runserver 0.0.0:8000"
-    volumes:
-      - ./backend/src:/app
+    env_file:
+      - backend/src/.env
+    # volumes:
+    #   - ./backend/src:/app/src
     ports:
       - "8000:8000"
     depends_on:
@@ -57,5 +61,6 @@ services:
       POSTGRES_PASSWORD: password123
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:

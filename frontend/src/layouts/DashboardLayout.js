@@ -59,14 +59,14 @@ const DashboardLayout = () => {
             key: '2',
             label: <Link to="/dashboard/import-cpso">Import CPSO</Link>, // Links to Import CPSO
         },
-        // {
-        //     key: '3',
-        //     label: <Link to="/dashboard/employees">Employee View</Link>, // Links to Employee View
-        // },
-        // {
-        //     key: '4',
-        //     label: <Link to="/dashboard/hr">HR View</Link>, // Links to HR View
-        // },
+        {
+            key: '3',
+            label: <Link to="/dashboard/employees">Employee View</Link>, // Links to Employee View
+        },
+        {
+            key: '4',
+            label: <Link to="/dashboard/hr">HR View</Link>, // Links to HR View
+        },
     ];
 
     const logoutItem = {

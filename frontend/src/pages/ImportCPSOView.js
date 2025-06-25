@@ -8,6 +8,17 @@ const ImportCPSOView = () => {
     const [loading, setLoading] = useState(false);
     const [taskId, setTaskId] = useState(null); // Store task ID if needed
     const [importLogs, setImportLogs] = useState([]); // Store import logs if needed
+    // const [defaultFSAs, setDefaultFSAs] = useState([]); // Store default FSAs if needed
+
+    // useEffect(() => {
+    //     // read fsa.json file and set the defaultFSAs state
+    //     const jsonData = require("../data/fsa.json");
+    //     setDefaultFSAs(jsonData.FSAs || []);
+    // }, []);
+
+    // console.log("Default FSAs:", defaultFSAs); // Log the default FSAs
+
+
     // const [error, setError] = useState(null); // Store error if needed
 
     const onFinish = (values) => {

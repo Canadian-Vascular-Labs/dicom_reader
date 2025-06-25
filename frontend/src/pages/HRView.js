@@ -25,7 +25,7 @@ const HRView = () => {
     return (
         <div>
             <h1>HR View</h1>
-            {certifications.length > 0 ? (
+            {certifications && certifications.length > 0 ? (
                 <div>
                     <h2>Certifications</h2>
                     {loading && <p>Loading...</p> /* Show loading state if needed */}

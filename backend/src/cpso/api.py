@@ -28,6 +28,12 @@ router = Router(tags=["cpso"])
 
 @router.post("/login", auth=None, response=TokenSchema)
 def login_view(request, payload: schemas.SignInSchema):
+    # print if we are using postgres image (docker) for db or external db
+    # if settings.DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    #     print("Using PostgreSQL database (docker image)", file=sys.stderr)
+    # else:
+    #     print("Using external database")
+
     print(f"Login attempt with user: {payload.username}")
     user = authenticate(request, username=payload.username, password=payload.password)
     if not user:

@@ -20,4 +20,4 @@ lxml
 # pip install psycopg2
 psycopg2-binary>=2.9
 # pip install dj-database-url
-dj-database-url>=1.0
+dj-database-url>=1.0.0

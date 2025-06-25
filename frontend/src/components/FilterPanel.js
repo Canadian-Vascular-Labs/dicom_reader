@@ -6,7 +6,7 @@ import NameFilter from './NameFilter';
 
 const { Option } = Select;
 
-export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors, setPage }) {
+export default function FilterPanel({ filters, onFilterChange, optionsMap, exportToExcel, excelIsDownloading, loadDoctors, setPage }) {
     // console.log('filters:', filters);
     const cpso_filter = filters.find(filter => filter.id === "cpso");
     const name_filter = filters.find(filter => filter.id === "name");
@@ -68,6 +68,14 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
                 <Button
                     disabled>
                     Save Filters
+                </Button>
+                <Button
+                    type="primary"
+                    onClick={exportToExcel}
+                    style={{ marginLeft: 8 }}
+                    loading={excelIsDownloading}
+                >
+                    Export to Excel
                 </Button>
             </div>
 
