@@ -10,4 +10,5 @@ router = Router(tags=["certifications"])
 
 @router.get("/certifications", response=List[str])
 def list_certifications(request):
+    print("Listing all certifications")
     return [cert.name for cert in Certification.objects.all()]
