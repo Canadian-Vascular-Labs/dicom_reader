@@ -133,7 +133,6 @@ class Employee(models.Model):
         help_text="Employee’s family (last) name",
     )
     email = models.EmailField(
-        unique=True,
         help_text="Unique email address of the employee",
     )
     phone_number = models.CharField(
@@ -143,13 +142,13 @@ class Employee(models.Model):
         help_text="Contact phone number (optional)",
     )
 
-    # “Employee works at many Labs, Lab has many Employees”
-    labs = models.ManyToManyField(
-        Lab,
-        related_name="employees",
-        blank=True,
-        help_text="Which labs this employee is currently associated with",
-    )
+    # # “Employee works at many Labs, Lab has many Employees”
+    # labs = models.ManyToManyField(
+    #     Lab,
+    #     related_name="employees",
+    #     blank=True,
+    #     help_text="Which labs this employee is currently associated with",
+    # )
 
     # “Employee has many Certifications” through the intermediate model
     certifications = models.ManyToManyField(
@@ -163,7 +162,7 @@ class Employee(models.Model):
         ordering = ["last_name", "first_name"]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.email})"
+        return f"{self.first_name} {self.last_name}"
 
     def completed_certifications(self):
         """
@@ -198,6 +197,31 @@ class Employee(models.Model):
             ).values_list("certification_id", flat=True)
         )
 
+
+class EmployeeLabs(models.Model):
+    """
+    The “through” table that links Employee <–> Lab. This is not strictly necessary
+    since we can use the ManyToManyField directly, but it allows us to add extra fields
+    in the future if needed.
+    """
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="employeelabs_set",
+    )
+    lab = models.ForeignKey(
+        Lab,
+        on_delete=models.CASCADE,
+        related_name="employeelabs_set",
+    )
+
+    class Meta:
+        unique_together = (("employee", "lab"),)
+        ordering = ["employee", "lab"]
+
+    def __str__(self):
+        return f"{self.employee} works at {self.lab}"
 
 class EmployeeCertification(models.Model):
     """

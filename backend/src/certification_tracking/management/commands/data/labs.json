@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Alliston",
+    "address": "117 Young St, Alliston, ON L9R 0E9",
+    "phone": "705-434-0074"
+  },
+  {
+    "name": "Markham",
+    "address": "5293 Hwy 7, Markham, ON L3P 7M7",
+    "phone": "289-301-6622"
+  },
+  {
+    "name": "Newmarket",
+    "address": "535 Mulock Dr, Newmarket, ON L3X 1W1",
+    "phone": "905-953-9044"
+  },
+  {
+    "name": "Thornhill",
+    "address": "30 Disera Dr Suite 240, Thornhill, ON L4J 0A7",
+    "phone": "416-221-9001"
+  }
+]

@@ -115,7 +115,8 @@ else:
             "NAME": os.getenv("DB_NAME", "my_django_db"),
             "USER": os.getenv("DB_USER", "my_django_user"),
             "PASSWORD": os.getenv("DB_PASS", "my_django_password"),
-            "HOST": "host.docker.internal",  # because your Postgres runs in Docker, Django runs in devcontainer
+            "HOST": "host.docker.internal",  
+            # "HOST": "localhost",  # Use localhost for local development
             "PORT": os.getenv("DB_PORT", "5434"),
         }
     }
