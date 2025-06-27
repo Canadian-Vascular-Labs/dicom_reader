@@ -1,4 +1,5 @@
-from django.db.models import Q
+from django.db.models import Q, Value, CharField
+from django.db.models.functions import Concat
 from ninja import NinjaAPI, Query, Router
 from ninja.pagination import paginate, LimitOffsetPagination
 from ninja.errors import HttpError
@@ -27,6 +28,8 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 from io import BytesIO
 from openpyxl.cell.cell import Cell
+
+
 
 # from celery import current_app
 
@@ -80,10 +83,18 @@ def create_qs(include_FSAs, include_specialties, include_mailing_list, include_n
         qs = qs.filter(is_on_mailing_list=include_mailing_list)
 
     if include_names:
-        name_q = Q()
+        qs = qs.annotate(
+            full_name=Concat(
+                "first_name",
+                Value(" "),
+                "last_name"
+            )
+        )
         for n in include_names:
-            name_q |= Q(name__icontains=n.strip())
-        qs = qs.filter(name_q)
+            tokens = n.strip().split()
+            for token in tokens:
+                qs = qs.filter(full_name__icontains=token)
+
 
     if include_CPSOs:
         cpso_q = Q()
@@ -154,7 +165,7 @@ def export_excel_view(
         include_names,
         include_CPSOs
     ).only(
-        "cpso_number", "name"
+        "cpso_number", "first_name", "last_name",
     )  
 
     # qs = Doctor.objects.only("cpso_number", "name").prefetch_related("specialties", "addresses")
@@ -217,17 +228,9 @@ def generate_excel_file(doctors, start_time=None):
 
     # Populate the Excel sheet with doctor data
     total_processed = 0
-    for doctor in doctors.iterator(chunk_size=1000):
-        # print(f"Processing doctor: {doctor.name} (CPSO: {doctor.cpso_number})", flush=True)
-        name_parts = doctor.name.split(", ")
-        # split name into first and last name
-        first_name, last_name = "", ""
-        if len(name_parts) == 2:
-            last_name = name_parts[0].strip()
-            first_name = name_parts[1].strip()
-        else:
-            last_name = doctor.name.strip()
-
+    for doctor in doctors.iterator(chunk_size=1000):        
+        first_name = doctor.first_name or ""
+        last_name = doctor.last_name or ""
 
         addresses = list(doctor.addresses.all())
         specialty_text = "\n".join([spec.name for spec in doctor.specialties.all()])
@@ -300,10 +303,21 @@ def generate_excel_file(doctors, start_time=None):
 # fetch doctors names by prefix
 @router.get("/doctors/name-{prefix}", response=List[str])
 def list_doctors_by_name_prefix(request, prefix: str):
-    return list(
-        Doctor.objects.filter(name__icontains=prefix).values_list("name", flat=True)
+    qs = Doctor.objects.annotate(
+        full_name=Concat(
+            "first_name",
+            Value(" "),
+            "last_name"
+        )
     )
+    
+    # tokenize user input
+    tokens = prefix.strip().split()
+    for token in tokens:
+        qs = qs.filter(full_name__icontains=token)
 
+    names = qs.values_list("full_name", flat=True).distinct()
+    return names
 
 # endpoint for returning array of cpso numbers
 @router.get("/doctors/fetch-{prefix}", response=List[str])

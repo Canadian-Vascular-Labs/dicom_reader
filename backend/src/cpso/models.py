@@ -4,13 +4,15 @@ from django.db import models
 class Doctor(models.Model):
     # make cpso_number PK
     cpso_number = models.CharField(max_length=10, primary_key=True)
-    name = models.CharField(max_length=100)
+    # name = models.CharField(max_length=100)
+    first_name = models.CharField(max_length=50, blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True)
     is_on_mailing_list = models.BooleanField(default=False)
 
     specialties = models.ManyToManyField("Specialty", related_name="doctors")
 
     def __str__(self):
-        return f"{self.name} -- ({self.cpso_number})"
+        return f"{self.first_name}, {self.last_name} -- ({self.cpso_number})"
 
 
 # doctor specialties, many-to-many relationship

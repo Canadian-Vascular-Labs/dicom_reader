@@ -22,3 +22,4 @@ psycopg2-binary>=2.9
 # pip install dj-database-url
 dj-database-url>=1.0
 openpyxl
+pandas

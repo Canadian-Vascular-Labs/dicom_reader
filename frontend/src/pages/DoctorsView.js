@@ -16,7 +16,14 @@ const columns = [
         width: 150,
         ellipsis: true,
     },
-    { title: "Name", dataIndex: "name", key: "name", width: 200, ellipsis: true },
+    {
+        title: "Name", dataIndex: "name", key: "name", width: 200, ellipsis: true,
+        render: (text, doctor) => (
+            <span>
+                {doctor.first_name} {doctor.last_name}
+            </span>
+        )
+    },
     {
         title: "Specialties",
         dataIndex: "specialties",
@@ -201,6 +208,9 @@ export default function DoctorsView() {
 
         const cpsoFilter = filters.find((f) => f.id === "cpso");
         const NameFilter = filters.find((f) => f.id === "name");
+        const MailingListFilter = filters.find((f) => f.id === "inMailingList");
+        console.log("MailingListFilter:", MailingListFilter);
+        console.log("MailingListFilter val:", MailingListFilter.value);
         const params = {
             ...(allFSAs_unique?.length && { include_FSAs: allFSAs_unique }),
             ...(specialtyFilter?.value?.length && {
@@ -212,13 +222,17 @@ export default function DoctorsView() {
             ...(NameFilter?.value?.length && {
                 include_names: NameFilter.value,
             }),
-            include_mailing_list: filters.find(
-                (f) => f.id === "inMailingList"
-            )?.value == "Yes" ? true : false,
+
+            // only include mailing list param if the filter is set to Yes or No
+            ...(MailingListFilter && MailingListFilter.value && {
+                include_mailing_list: MailingListFilter.value === "Yes" ? true : false,
+            }),
 
             offset: (page - 1) * pageSize,
             limit: limit ? pageSize : undefined,
         };
+
+        console.log("Params built for API request:", params);
 
         return params;
     };

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from cpso.models import Doctor, Specialty, Address
@@ -21,8 +22,14 @@ class Command(BaseCommand):
     def import_data(self, data):
         with transaction.atomic():
             for cpsonumber, info in data.items():
+                name_parts = info.get("name", "").strip().split(',')
+
                 # Normalize fields safely
-                name = (info.get("name") or "").strip()
+                last_name = name_parts[0].strip() if len(name_parts) > 0 else ""
+                first_name = name_parts[1].strip() if len(name_parts) > 1 else ""
+                first_name = re.sub(r'\s+', ' ', first_name)  # Normalize whitespace
+                last_name = re.sub(r'\s+', ' ', last_name)  # Normalize whitespace
+
                 # total_addresses = (
                 #     info.get("additionaladdresscount", 0) + 1
                 # )  # +1 for primary address
@@ -34,7 +41,9 @@ class Command(BaseCommand):
                 doctor, was_created = Doctor.objects.update_or_create(
                     cpso_number=cpsonumber,
                     defaults={
-                        "name": name,
+                        # "name": name,
+                        "first_name": re.sub(r'\s+', ' ', first_name),
+                        "last_name": re.sub(r'\s+', ' ', last_name),
                         # "total_addresses": total_addresses,
                         # "specialties_count": total_specialties,
                     },
@@ -75,10 +84,10 @@ class Command(BaseCommand):
 
                 # Additional addresses
                 for addr in info.get("additionalAddresses") or []:
-                    a_street1 = (addr.get("street1") or "").strip()
-                    a_city = (addr.get("city") or "").strip()
-                    a_province = (addr.get("province") or "").strip()
-                    a_postal = (addr.get("postalcode") or "").strip()
+                    a_street1 = (addr.get("street1") or "").strip()[:100]
+                    a_city = (addr.get("city") or "").strip()[:100]
+                    a_province = (addr.get("province") or "").strip()[:100]
+                    a_postal = (addr.get("postalcode") or "").strip()[:100]
 
                     Address.objects.update_or_create(
                         doctor=doctor,
@@ -87,15 +96,15 @@ class Command(BaseCommand):
                         province=a_province,
                         postal_code=a_postal,
                         defaults={
-                            "street_2": (addr.get("street2") or "").strip() or None,
-                            "street_3": (addr.get("street3") or "").strip() or None,
-                            "street_4": (addr.get("street4") or "").strip() or None,
+                            "street_2": (addr.get("street2") or "").strip()[:100] or None,
+                            "street_3": (addr.get("street3") or "").strip()[:100] or None,
+                            "street_4": (addr.get("street4") or "").strip()[:100] or None,
                             "phone_number": (addr.get("phonenumber") or "").strip()
                             or None,
                             "fax_number": (addr.get("fax") or "").strip() or None,
                         },
                     )
-
+                
     def handle(self, *args, **options):
         json_paths = options["json_files"]
         for json_path in json_paths:
@@ -115,3 +124,7 @@ class Command(BaseCommand):
                 f"Import complete: {self.created} created, {self.updated} updated."
             )
         )
+
+
+# python manage.py import_doctors cpso/management/commands/data/CPSO_DATA/*.json
+# python manage.py import_doctors cpso/management/commands/data/CPSO_DATA/L3P.json

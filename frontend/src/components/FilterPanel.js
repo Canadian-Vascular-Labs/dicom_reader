@@ -26,7 +26,7 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
                 {other_filters.map(({ id, value, label }) => {
                     return (
                         <Select
-                            disabled={id === 'inMailingList'}
+                            // disabled={id === 'inMailingList'}
                             key={id}
                             // set mode to multiple if the id is not 'inMailingList'
                             // otherwise set it to 'default'

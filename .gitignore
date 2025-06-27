@@ -72,3 +72,7 @@ coverage/
 # Miscellaneous
 *.bak
 *.tmp
+
+
+# data files
+backend/src/cpso/management/commands/data/*
