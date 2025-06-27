@@ -81,6 +81,7 @@ MIDDLEWARE = [
 # CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://app.cvl-solutions.ca",
 ]
 
 ROOT_URLCONF = "core.urls"

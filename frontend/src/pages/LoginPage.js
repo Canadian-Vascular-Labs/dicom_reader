@@ -32,7 +32,7 @@ const LoginPage = () => {
     const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
         try {
             console.log('Submitting login form:', values);
-
+            console.log('Verifying API URL:', API_BASE_URL);
             // http://127.0.0.1:8000/api/cpso/login
             const AUTH_URL = `${API_BASE_URL}/api/cpso/login`;
             console.log('API URL:', AUTH_URL);

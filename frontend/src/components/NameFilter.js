@@ -6,7 +6,7 @@ import { fetchData } from "../requests/helper";
 
 const { Option } = Select;
 
-const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
+const NameFilter = ({ filter, onFilterChange, URL, data_arr, onSelectChange }) => {
     // console.log("NameFilter:", filter);
     const [inputValue, setinputValue] = useState(""); // current text in the search box
     const [fetching, setFetching] = useState(false);
@@ -35,7 +35,7 @@ const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
                     return;
 
                 }
-                const url = `cpso/doctors/name-${query}`;
+                const url = `${URL}-${query}`;
 
                 const data = await fetchData(url, {}, setFetching, () => { });
                 if (Array.isArray(data)) {
@@ -63,11 +63,23 @@ const NameFilter = ({ filter, onFilterChange, onSelectChange }) => {
      *    if `inputValue` changes before the 300ms is up.
      */
     useEffect(() => {
-        debouncedFetch(inputValue);
+        if (data_arr && data_arr.length > 0) {
+            // filter through the data_arr to find the names that match the inputValue
+            const filteredNames = data_arr
+                // map the data_arr to a field called `name` from `first_name` and `last_name`
+                .map(item => `${item.first_name} ${item.last_name}`)
+                .filter(name => name.toLowerCase().includes(inputValue.toLowerCase()))
+                .map(name => ({ value: name, label: name }));
+            setNames(filteredNames);
+        }
 
-        return () => {
-            debouncedFetch.cancel();
-        };
+        else {
+            debouncedFetch(inputValue);
+
+            return () => {
+                debouncedFetch.cancel();
+            };
+        }
     }, [inputValue, debouncedFetch]);
 
     /**

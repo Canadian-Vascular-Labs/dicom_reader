@@ -5,7 +5,8 @@ import FilterPanel from "../components/FilterPanel";
 import FilterSideBar from "../components/FilterSideBar";
 import { set } from "mongoose";
 import ImportCPSOView from "./ImportCPSOView";
-// import DoctorsView from './pages/DoctorsView';
+import { API_BASE_URL } from "../config";
+import axios from "axios";
 
 const columns = [
     {
@@ -78,6 +79,7 @@ export default function DoctorsView() {
 
 
     const [loading, setLoading] = useState(true);
+    const [isExcelLoading, setIsExcelLoading] = useState(false);
     const [doctors, setDoctors] = React.useState([]);
     const [filters, setFilters] = useState([
         { id: "name", value: [], label: "Name" },
@@ -171,6 +173,56 @@ export default function DoctorsView() {
     }, [fetchSpecialties]);
 
 
+    const buildParams = (filters, limit = true) => {
+        const fsaFilter = filters.find((f) => f.id === "fsa");
+        const fsaValues = fsaFilter?.value ?? [];
+
+        const labFsaValues = filters
+            .find((f) => f.id === "labs")
+            ?.value             // e.g. ["Markham", "Thornhill"]
+            .flatMap((labKey) => labs[labKey] ?? []) ?? [];
+
+        const allFSAs_unique = Array.from(new Set([...fsaValues, ...labFsaValues]));
+        const specialtyFilter = filters.find((f) => f.id === "specialty");
+
+        if (specialtyFilter.value.includes("defaults")) {
+            specialtyFilter.value = specialties
+                .find((s) => s.title === "Main Specialties")
+                .options.map((o) => o.value);
+        }
+        else if (specialtyFilter.value.includes("all")) {
+            specialtyFilter.value = specialties
+                .filter((s) => s.title !== "Mass Selection Options")
+                .flatMap((s) => s.options.map((o) => o.value));
+        }
+
+
+
+
+        const cpsoFilter = filters.find((f) => f.id === "cpso");
+        const NameFilter = filters.find((f) => f.id === "name");
+        const params = {
+            ...(allFSAs_unique?.length && { include_FSAs: allFSAs_unique }),
+            ...(specialtyFilter?.value?.length && {
+                include_specialties: specialtyFilter.value,
+            }),
+            ...(cpsoFilter?.value?.length && {
+                include_CPSOs: cpsoFilter.value,
+            }),
+            ...(NameFilter?.value?.length && {
+                include_names: NameFilter.value,
+            }),
+            include_mailing_list: filters.find(
+                (f) => f.id === "inMailingList"
+            )?.value == "Yes" ? true : false,
+
+            offset: (page - 1) * pageSize,
+            limit: limit ? pageSize : undefined,
+        };
+
+        return params;
+    };
+
     // load labs from JSON file
     const loadLocations = useCallback(async () => {
         const jsonData = require("../data/fsa.json");
@@ -217,57 +269,13 @@ export default function DoctorsView() {
 
     const loadDoctors = useCallback(async () => {
         console.log("param::Loading doctors from API...");
-        const fsaFilter = filters.find((f) => f.id === "fsa");
-        const fsaValues = fsaFilter?.value ?? [];
-
-        const labFsaValues = filters
-            .find((f) => f.id === "labs")
-            ?.value             // e.g. ["Markham", "Thornhill"]
-            .flatMap((labKey) => labs[labKey] ?? []) ?? [];
-
-        const allFSAs_unique = Array.from(new Set([...fsaValues, ...labFsaValues]));
-        const specialtyFilter = filters.find((f) => f.id === "specialty");
-
-        if (specialtyFilter.value.includes("defaults")) {
-            specialtyFilter.value = specialties
-                .find((s) => s.title === "Main Specialties")
-                .options.map((o) => o.value);
-        }
-        else if (specialtyFilter.value.includes("all")) {
-            specialtyFilter.value = specialties
-                .filter((s) => s.title !== "Mass Selection Options")
-                .flatMap((s) => s.options.map((o) => o.value));
-        }
-
-
-
-
-        const cpsoFilter = filters.find((f) => f.id === "cpso");
-        const NameFilter = filters.find((f) => f.id === "name");
-        const params = {
-            ...(allFSAs_unique?.length && { include_FSAs: allFSAs_unique }),
-            ...(specialtyFilter?.value?.length && {
-                include_specialties: specialtyFilter.value,
-            }),
-            ...(cpsoFilter?.value?.length && {
-                include_CPSOs: cpsoFilter.value,
-            }),
-            ...(NameFilter?.value?.length && {
-                include_names: NameFilter.value,
-            }),
-            include_mailing_list: filters.find(
-                (f) => f.id === "inMailingList"
-            )?.value == "Yes" ? true : false,
-
-            offset: (page - 1) * pageSize,
-            limit: pageSize,
-        };
+        const params = buildParams(filters);
         const data = await fetchDoctors(params);
         if (data) {
             // console.log("Total doctors fetched:", data.count);
             setDoctors(data);
             setTotalDoctors(data.count || 0);
-            // console.log("Doctors data loaded:", data);
+            console.log("Doctors data loaded:", data);
         } else {
             console.error("Failed to fetch doctors data");
         }
@@ -323,6 +331,42 @@ export default function DoctorsView() {
     }, [pageSize, page])
 
 
+    const exportToExcel = useCallback(async () => {
+        console.log("Exporting to Excel...");
+        try {
+            const token = localStorage.getItem("token");
+            const params = buildParams(filters, false);
+            // console.log("Export params:", params);
+            // return;
+
+            setIsExcelLoading(true);
+            const response = await axios.get(`${API_BASE_URL}/api/cpso/doctors/export`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: params,
+                responseType: "blob",  // 👈 tell axios to expect binary data
+            });
+
+
+            const blob = new Blob([response.data], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "doctors_export.xlsx";
+            link.click();
+            link.remove();
+
+        } catch (error) {
+            console.error("Excel export failed:", error);
+        } finally {
+            setIsExcelLoading(false);
+        }
+    }, [filters]);
+
 
 
     const handleFilterChange = (id, newValue) => {
@@ -340,6 +384,8 @@ export default function DoctorsView() {
                 optionsMap={optionsMap}
                 loadDoctors={loadDoctors}
                 setPage={setPage}
+                exportToExcel={exportToExcel}
+                isExcelLoading={isExcelLoading}
             />
 
             <Row gutter={16} align="top" wrap={false}>

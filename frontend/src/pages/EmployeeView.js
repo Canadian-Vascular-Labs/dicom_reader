@@ -9,6 +9,8 @@ const certifications = [
 ];
 
 const EmployeeView = () => {
+
+
     // fetch certifications from backend
     // const [certifications, setCertifications] = useState([]);
 

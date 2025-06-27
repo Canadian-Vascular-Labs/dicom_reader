@@ -18,6 +18,15 @@ from cpso.auth import GlobalAuth
 import sys
 
 from cpso.tasks import import_cpso_data
+from django.core.files import File
+from openpyxl.styles import Alignment
+from django.http import FileResponse
+from tempfile import NamedTemporaryFile
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from openpyxl.utils import get_column_letter
+from io import BytesIO
+from openpyxl.cell.cell import Cell
 
 # from celery import current_app
 
@@ -52,6 +61,38 @@ def login_view(request, payload: schemas.SignInSchema):
     return 200, TokenSchema(token=token)
 
 
+def create_qs(include_FSAs, include_specialties, include_mailing_list, include_names, include_CPSOs):
+    qs = Doctor.objects.all()
+
+    if include_FSAs:
+        fsa_q = Q()
+        for fsa in include_FSAs:
+            fsa_q |= Q(addresses__postal_code__startswith=fsa)
+        qs = qs.filter(fsa_q)
+
+    if include_specialties:
+        specialty_q = Q()
+        for specialty in include_specialties:
+            specialty_q |= Q(specialties__name__icontains=specialty.strip())
+        qs = qs.filter(specialty_q)
+
+    if include_mailing_list is not None:
+        qs = qs.filter(is_on_mailing_list=include_mailing_list)
+
+    if include_names:
+        name_q = Q()
+        for n in include_names:
+            name_q |= Q(name__icontains=n.strip())
+        qs = qs.filter(name_q)
+
+    if include_CPSOs:
+        cpso_q = Q()
+        for cpso in include_CPSOs:
+            cpso_q |= Q(cpso_number=cpso)
+        qs = qs.filter(cpso_q)
+
+    return qs.prefetch_related("specialties", "addresses").distinct()
+
 @router.get("/doctors", response=List[schemas.DoctorSchema])
 @paginate(LimitOffsetPagination)
 def list_doctors(
@@ -66,7 +107,7 @@ def list_doctors(
     include_names: Optional[List[str]] = Query(None, description="Filter by name"),
     include_CPSOs: Optional[List[str]] = Query(
         None, description="Filter by CPSO number"
-    ),
+    )
 ):
     print(
         f"request: {request}, include_FSAs: {include_FSAs}, "
@@ -74,39 +115,186 @@ def list_doctors(
         f"include_mailing_list: {include_mailing_list}, "
         f"include_names: {include_names}, include_CPSOs: {include_CPSOs}"
     )
-    qs = Doctor.objects.all()
 
-    # prefetch related fields to optimize queries
-    if include_FSAs:
-        fsa_q = Q()
-        for fsa in include_FSAs:
-            fsa_q |= Q(addresses__postal_code__startswith=fsa)
-        qs = qs.filter(fsa_q)
+    # start time for performance measurement
+    start_time = datetime.now(timezone.utc)
 
-    if include_specialties:
-        specialty_q = Q()
-        for specialty in include_specialties:
-            specialty_q |= Q(specialties__name__icontains=specialty.strip())
-        qs = qs.filter(specialty_q)
-    if include_mailing_list is not None:
-        qs = qs.filter(is_on_mailing_list=include_mailing_list)
-    if include_names:
-        name_q = Q()
-        for n in include_names:
-            name_q |= Q(name__icontains=n.strip())
-        qs = qs.filter(name_q)
-    if include_CPSOs:
-        cpso_q = Q()
-        for cpso in include_CPSOs:
-            cpso_q |= Q(cpso_number=cpso)
-        qs = qs.filter(cpso_q)
-
-    qs = qs.prefetch_related("specialties", "addresses")
-
-    # return paginated results
-    # make sure distinct is used to avoid duplicates
-    qs = qs.distinct()
+    qs = create_qs(
+        include_FSAs,
+        include_specialties,
+        include_mailing_list,
+        include_names,
+        include_CPSOs
+    )
+    
+    # end time for performance measurement
+    end_time = datetime.now(timezone.utc)
+    elapsed_time = (end_time - start_time).total_seconds()
+    print(
+        f"Query executed in {elapsed_time:.2f} seconds. "
+        f"Total results: {qs.count()}",
+        flush=True,
+    )
     return qs
+
+@router.get("/doctors/export", auth=None)
+def export_excel_view(
+    request,
+    include_FSAs: Optional[List[str]] = Query(None, alias="include_FSAs[]"),
+    include_specialties: Optional[List[str]] = Query(None, alias="include_specialties[]"),
+    include_mailing_list: Optional[bool] = Query(None),
+    include_names: Optional[List[str]] = Query(None, alias="include_names[]"),
+    include_CPSOs: Optional[List[str]] = Query(None, alias="include_CPSOs[]"),
+):
+    start_time = datetime.now(timezone.utc)
+    qs = create_qs(
+        include_FSAs,
+        include_specialties,
+        include_mailing_list,   
+        include_names,
+        include_CPSOs
+    ).only(
+        "cpso_number", "name"
+    )  
+
+    # qs = Doctor.objects.only("cpso_number", "name").prefetch_related("specialties", "addresses")
+    # print(
+    #     f"request: {request}, include_FSAs: {include_FSAs}, ")
+    return generate_excel_file(qs, start_time=start_time)
+
+
+# helper method to generate excel file
+def generate_excel_file(doctors, start_time=None):
+    """
+    This function should generate an Excel file from the list of doctors.
+    """
+    wb = Workbook()
+    ws = wb.active
+
+    def styled_cell(value, wrap=False):
+        cell = Cell(ws, value=value)
+        if wrap:
+            cell.alignment = Alignment(wrap_text=True)
+        return cell
+
+
+    # CPSO Number	LName	FName	Specialties	Address	City	FSA	Address2	Address3	Address4	Postal Code	Primary Phone Number	Primary Fax Number
+    ws.append([
+        "CPSO Number",  
+        "Last Name",
+        "First Name",
+        "Specialties",
+        "Address",
+        "City",
+        "FSA",
+        "Address2",
+        "Address3",
+        "Address4",
+        "Postal Code",
+        "Primary Phone Number",
+        "Primary Fax Number"
+    ])
+
+    # Apply header styles
+    header_fill = PatternFill("solid", fgColor="D9E1F2")  # light blue
+    header_font = Font(bold=True)
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin")
+    )
+
+    for col_idx, cell in enumerate(ws[1], start=1):
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+
+    ws.freeze_panes = ws["A1"]
+
+
+    # Populate the Excel sheet with doctor data
+    total_processed = 0
+    for doctor in doctors.iterator(chunk_size=1000):
+        # print(f"Processing doctor: {doctor.name} (CPSO: {doctor.cpso_number})", flush=True)
+        name_parts = doctor.name.split(", ")
+        # split name into first and last name
+        first_name, last_name = "", ""
+        if len(name_parts) == 2:
+            last_name = name_parts[0].strip()
+            first_name = name_parts[1].strip()
+        else:
+            last_name = doctor.name.strip()
+
+
+        addresses = list(doctor.addresses.all())
+        specialty_text = "\n".join([spec.name for spec in doctor.specialties.all()])
+        # for address lines (address_1, etc.)
+        address_texts = [
+            "\n".join(filter(None, [
+                address.street_1,
+                address.street_2,
+                address.street_3,
+                address.street_4,
+                address.city,
+                address.province,
+                address.postal_code
+            ])) if address else "Address not found"
+            for address in list(doctor.addresses.all())
+        ]        
+
+
+        row = [
+            doctor.cpso_number,
+            last_name,
+            first_name,
+            styled_cell(specialty_text if specialty_text else "No specialties", wrap=True),
+            styled_cell(address_texts[0] if address_texts else "Address not found", wrap=True),
+            addresses[0].city if addresses else "City not found",
+            addresses[0].postal_code[:3].upper() if addresses else "Address not found",
+            styled_cell(address_texts[1] if len(address_texts) > 1 else "Address not found", wrap=True),
+            styled_cell(address_texts[2] if len(address_texts) > 2 else "Address not found", wrap=True),
+            styled_cell(address_texts[3] if len(address_texts) > 3 else "Address not found", wrap=True),
+            addresses[0].postal_code if addresses else "",
+            addresses[0].phone_number if addresses else "",
+            addresses[0].fax_number if addresses else "",
+        ]
+
+        ws.append(row)
+
+        total_processed += 1
+        
+        # makes download go from 3 seconds to 50 seconds
+        # last_row = ws.max_row
+        # for col in [4, 5, 8, 9, 10]:
+        #     ws.cell(row=last_row, column=col).alignment = Alignment(wrap_text=True)
+
+    for col in ws.columns:
+        max_length = max(len(str(cell.value or "")) for cell in col)
+        col_letter = get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(10, min(max_length + 2, 50))  # cap to avoid huge widths
+
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    end_time = datetime.now(timezone.utc)
+    elapsed_time = (end_time - start_time).total_seconds() if start_time else 0
+    print(
+        f"Excel file generated in {elapsed_time:.2f} seconds. ")
+
+    print(f"Total doctors processed: {total_processed}", flush=True)
+
+    return FileResponse(
+        output,
+        as_attachment=True,
+        filename="doctors_export.xlsx",
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
 
 
 # fetch doctors names by prefix

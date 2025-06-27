@@ -6,7 +6,7 @@ import NameFilter from './NameFilter';
 
 const { Option } = Select;
 
-export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors, setPage }) {
+export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors, setPage, exportToExcel, isExcelLoading }) {
     // console.log('filters:', filters);
     const cpso_filter = filters.find(filter => filter.id === "cpso");
     const name_filter = filters.find(filter => filter.id === "name");
@@ -22,7 +22,7 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <CPSOFilter filter={cpso_filter} onFilterChange={onFilterChange} />
-                <NameFilter filter={name_filter} onFilterChange={onFilterChange} />
+                <NameFilter filter={name_filter} onFilterChange={onFilterChange} URL={"cpso/doctors/name"} />
                 {other_filters.map(({ id, value, label }) => {
                     return (
                         <Select
@@ -66,8 +66,10 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
                     Reset Filters
                 </Button>
                 <Button
-                    disabled>
-                    Save Filters
+                    type="primary"
+                    onClick={exportToExcel}
+                    loading={isExcelLoading}>
+                    Download Excel
                 </Button>
             </div>
 
