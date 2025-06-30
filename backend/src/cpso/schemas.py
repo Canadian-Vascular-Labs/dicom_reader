@@ -50,3 +50,10 @@ class ExtractorStatusSchema(Schema):
     status: str
     result: Optional[str] = None
     import_logs: Optional[List[Dict]] = None
+
+class DoctorFilterSchema(BaseModel):
+    include_FSAs: Optional[List[str]] = None
+    include_specialties: Optional[List[str]] = None
+    include_mailing_list: Optional[bool] = None
+    include_names: Optional[List[str]] = None
+    include_CPSOs: Optional[List[str]] = None

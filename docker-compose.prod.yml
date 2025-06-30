@@ -2,18 +2,18 @@
 # version: "3.9"
 
 services:
-  # backend:
-  #   platform: linux/amd64
-  #   image: cvlacr.azurecr.io/cpso-stack-backend:prod
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile.prod
-  #   env_file:
-  #     - backend/src/.env.prod
-  #   ports:
-  #     - "8000:8000"
-  #   # command: sleep infinity
-  #   command: gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers=3 --timeout=60
+  backend:
+    platform: linux/amd64
+    image: cvlacr.azurecr.io/cpso-stack-backend:prodv8
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - backend/src/.env.prod
+    ports:
+      - "8000:8000"
+    # command: sleep infinity
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers=3 --timeout=60
 
 
   
@@ -29,7 +29,7 @@ services:
   
   frontend:
     platform: linux/amd64
-    image: cvlacr.azurecr.io/cpso-stack-frontend:prodv6
+    image: cvlacr.azurecr.io/cpso-stack-frontend:prodv10
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod

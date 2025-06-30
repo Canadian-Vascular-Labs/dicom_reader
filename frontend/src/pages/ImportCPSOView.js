@@ -110,7 +110,7 @@ const ImportCPSOView = () => {
 
                         <Form.Item>
                             <Space>
-                                <Button type="primary" htmlType="submit">
+                                <Button type="primary" htmlType="submit" disabled={true}>
                                     Import
                                 </Button>
                                 <Button onClick={() => form.resetFields()}>Reset</Button>

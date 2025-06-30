@@ -84,16 +84,18 @@ def create_qs(include_FSAs, include_specialties, include_mailing_list, include_n
 
     if include_names:
         qs = qs.annotate(
-            full_name=Concat(
-                "first_name",
-                Value(" "),
-                "last_name"
-            )
+            full_name=Concat("first_name", Value(" "), "last_name")
         )
+
+        name_q = Q()
         for n in include_names:
             tokens = n.strip().split()
+            token_q = Q()
             for token in tokens:
-                qs = qs.filter(full_name__icontains=token)
+                token_q &= Q(full_name__icontains=token)
+            name_q |= token_q
+
+        qs = qs.filter(name_q)
 
 
     if include_CPSOs:
@@ -104,48 +106,29 @@ def create_qs(include_FSAs, include_specialties, include_mailing_list, include_n
 
     return qs.prefetch_related("specialties", "addresses").distinct()
 
-@router.get("/doctors", response=List[schemas.DoctorSchema])
+@router.post("/doctors", response=List[schemas.DoctorSchema])
 @paginate(LimitOffsetPagination)
 def list_doctors(
     request,
-    include_FSAs: Optional[List[str]] = Query(None, description="Filter by FSAs"),
-    include_specialties: Optional[List[str]] = Query(
-        None, description="Filter by doctor specialties"
-    ),
-    include_mailing_list: Optional[bool] = Query(
-        None, description="Filter by if the doctor is already on the mailing list"
-    ),
-    include_names: Optional[List[str]] = Query(None, description="Filter by name"),
-    include_CPSOs: Optional[List[str]] = Query(
-        None, description="Filter by CPSO number"
-    )
+    payload: schemas.DoctorFilterSchema
 ):
-    print(
-        f"request: {request}, include_FSAs: {include_FSAs}, "
-        f"include_specialties: {include_specialties}, "
-        f"include_mailing_list: {include_mailing_list}, "
-        f"include_names: {include_names}, include_CPSOs: {include_CPSOs}"
-    )
+    print(f"include names: {payload.include_names}", flush=True)
 
-    # start time for performance measurement
     start_time = datetime.now(timezone.utc)
 
     qs = create_qs(
-        include_FSAs,
-        include_specialties,
-        include_mailing_list,
-        include_names,
-        include_CPSOs
+        payload.include_FSAs,
+        payload.include_specialties,
+        payload.include_mailing_list,
+        payload.include_names,
+        payload.include_CPSOs
     )
-    
-    # end time for performance measurement
+
     end_time = datetime.now(timezone.utc)
     elapsed_time = (end_time - start_time).total_seconds()
-    print(
-        f"Query executed in {elapsed_time:.2f} seconds. "
-        f"Total results: {qs.count()}",
-        flush=True,
-    )
+    print(f"Query executed in {elapsed_time:.2f} seconds. Total results: {qs.count()}", flush=True)
+
+    qs = qs.order_by("last_name", "first_name")
     return qs
 
 @router.get("/doctors/export", auth=None)
@@ -301,23 +284,16 @@ def generate_excel_file(doctors, start_time=None):
 
 
 # fetch doctors names by prefix
-@router.get("/doctors/name-{prefix}", response=List[str])
-def list_doctors_by_name_prefix(request, prefix: str):
-    qs = Doctor.objects.annotate(
-        full_name=Concat(
-            "first_name",
-            Value(" "),
-            "last_name"
-        )
-    )
-    
-    # tokenize user input
-    tokens = prefix.strip().split()
-    for token in tokens:
-        qs = qs.filter(full_name__icontains=token)
+@router.get("/doctors/names", response=List[str])
+def list_doctors_by_name_prefix(request, query: str, is_first_name: bool):
+    prefix = query.strip().lower()
+    if (is_first_name):
+        qs = Doctor.objects.filter(first_name__istartswith=prefix)
+    else:
+        qs = Doctor.objects.filter(last_name__istartswith=prefix)
 
-    names = qs.values_list("full_name", flat=True).distinct()
-    return names
+    return sorted([f"{doc.first_name} {doc.last_name}" for doc in qs])
+
 
 # endpoint for returning array of cpso numbers
 @router.get("/doctors/fetch-{prefix}", response=List[str])

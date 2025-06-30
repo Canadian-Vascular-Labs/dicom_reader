@@ -93,9 +93,12 @@ const CPSOFilter = ({ filter, onFilterChange, onSelectChange }) => {
             placeholder="Search CPSO numbers..."
             notFoundContent={fetching ? <Spin size="small" /> : null}
             onSearch={handleSearch}           // called on typing, passes the search text
-            onChange={vals => onFilterChange(filter.id, vals)}           // called on selection/clear, passes array of values
+            onChange={vals => onFilterChange(filter.id, vals, cpsoNumbers)}           // called on selection/clear, passes array of values
             style={{ minWidth: 200 }}
-            options={cpsoNumbers}             // the fetched [{ label, value }] array
+            options={cpsoNumbers && cpsoNumbers.length > 0 ?
+                [{ label: "Select All", value: "__all__" }, // add a "Select All" option
+                ...cpsoNumbers] : []
+            }
             value={filter.value} // controlled value from the parent
         />
     );

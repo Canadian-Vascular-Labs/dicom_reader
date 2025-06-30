@@ -48,22 +48,26 @@ const columns = [
         title: "Addresses",
         dataIndex: "addresses",
         key: "addresses",
-        width: 200,
+        width: 400,
         ellipsis: true,
-        render: (addresses) => (
-            <span>
-                {addresses.filter(addr => isValidPostalCode(addr.postal_code)).map((addr, index) => (
-                    <span key={index}>
-                        {/* skip if not valid postal code */}
-                        <span style={{}}>
-                            {addr.postal_code}
-                            {index < addresses.length - 1 ? ", " : ""}
-                        </span>
-                    </span>
-                ))}
+        render: (addresses) => {
+            const primaryAddress = addresses.find(addr => addr.is_primary) || addresses[0];
+            const addr_string = `${primaryAddress.street_1}, ${primaryAddress.city}, ${primaryAddress.postal_code}`;
+            return <span style={{}}>
+                {addr_string}
             </span>
-        ),
+        }
     },
+    // {
+    //     title: "In Mailing List",
+    //     dataIndex: "in_mailing_list",
+    //     key: "is_on_mailing_list",
+    //     width: 100,
+    //     ellipsis: true,
+    //     render: (inMailingList) => (
+    //         <span>{inMailingList ? "Yes" : "No"}</span>
+    //     ),
+    // },
     // {
     //     title: "In Mailing List",
     //     dataIndex: "in_mailing_list",
@@ -89,7 +93,8 @@ export default function DoctorsView() {
     const [isExcelLoading, setIsExcelLoading] = useState(false);
     const [doctors, setDoctors] = React.useState([]);
     const [filters, setFilters] = useState([
-        { id: "name", value: [], label: "Name" },
+        { id: "firstName", value: [], label: "First Name" },
+        { id: "lastName", value: [], label: "Last Name" },
         { id: "cpso", value: [], label: "CPSO Number" },
         { id: "labs", value: [], label: "Labs" },
         { id: "fsa", value: [], label: "FSA" },
@@ -207,7 +212,8 @@ export default function DoctorsView() {
 
 
         const cpsoFilter = filters.find((f) => f.id === "cpso");
-        const NameFilter = filters.find((f) => f.id === "name");
+        // const NameFilter = filters.find((f) => f.id === "name");
+        const NameFilter = filters.filter((f) => f.id === "firstName" || f.id === "lastName");
         const MailingListFilter = filters.find((f) => f.id === "inMailingList");
         console.log("MailingListFilter:", MailingListFilter);
         console.log("MailingListFilter val:", MailingListFilter.value);
@@ -219,8 +225,8 @@ export default function DoctorsView() {
             ...(cpsoFilter?.value?.length && {
                 include_CPSOs: cpsoFilter.value,
             }),
-            ...(NameFilter?.value?.length && {
-                include_names: NameFilter.value,
+            ...(NameFilter?.length && {
+                include_names: NameFilter.map((f) => f.value).flat(),
             }),
 
             // only include mailing list param if the filter is set to Yes or No
@@ -269,17 +275,18 @@ export default function DoctorsView() {
 
     const fetchDoctors = useCallback(async (params) => {
         try {
-            const data = await fetchData("cpso/doctors", params, setLoading, () => { });
-            if (!data) {
-                console.error("Failed to fetch doctors data");
-                return null;
-            }
-            return data;
-        } catch (error) {
-            console.error("Error fetching doctors:", error);
+            const data = await axios.post(`${API_BASE_URL}/api/cpso/doctors`, params, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                }
+            });
+            return data.data;
+        } catch (err) {
+            console.error("Error fetching doctors:", err);
             return null;
         }
     }, []);
+
 
     const loadDoctors = useCallback(async () => {
         console.log("param::Loading doctors from API...");
@@ -383,13 +390,26 @@ export default function DoctorsView() {
 
 
 
-    const handleFilterChange = (id, newValue) => {
-        console.log(`Filter change for ${id}:`, newValue);
+    const handleFilterChange = (id, newValue, nameOptions) => {
+        console.log(`Filter change for ${id} with value: ${newValue} and options:`, nameOptions);
+        if (newValue.includes("__all__")) {
+            // set newValue to all options if "Select All" is chosen
+            if (nameOptions && nameOptions.length > 0) {
+                newValue = nameOptions.map((option) => option.value);
+            }
+        }
         setFilters((f) =>
             f.map((x) => (x.id === id ? { ...x, value: newValue } : x))
         );
+
         // setPage(1); // reset to first page on filter change
     };
+
+    useMemo(() => {
+        console.log("Filters changed:", filters);
+    }, [filters]);
+
+
     return (
         <div>
             <FilterPanel

@@ -1,16 +1,43 @@
 // src/components/FilterPanel.jsx
-import React from 'react';
-import { Divider, Space, Input, Select, Button } from 'antd';
-import CPSOFilter from './CPSOFilter';
-import NameFilter from './NameFilter';
 
-const { Option } = Select;
+import React, { useState } from "react";
+import { Select, Button } from "antd";
+import CPSOFilter from "./CPSOFilter";
+import NameFilter from "./NameFilter";
 
-export default function FilterPanel({ filters, onFilterChange, optionsMap, loadDoctors, setPage, exportToExcel, isExcelLoading }) {
-    // console.log('filters:', filters);
-    const cpso_filter = filters.find(filter => filter.id === "cpso");
-    const name_filter = filters.find(filter => filter.id === "name");
-    const other_filters = filters.filter(filter => filter.id !== "cpso" && filter.id !== "name");
+export default function FilterPanel({
+    filters,
+    onFilterChange,
+    optionsMap,
+    loadDoctors,
+    setPage,
+    exportToExcel,
+    isExcelLoading
+}) {
+    // split out filters
+    const cpsoFilter = filters.find(f => f.id === "cpso");
+    const nameFilters = filters.filter(f => ["firstName", "lastName"].includes(f.id));
+    const otherFilters = filters.filter(
+        f => !["cpso", "firstName", "lastName"].includes(f.id)
+    );
+
+    // track filtered options for each filter dynamically
+    const [filteredOptionsMap, setFilteredOptionsMap] = useState({});
+
+    console.log("FilterPanel: optionsMap:", optionsMap);
+
+    const handleSearch = (input, id) => {
+        const baseOptions = optionsMap[id] || [];
+        console.log("Base options for", id, ":", baseOptions);
+        const filtered = baseOptions.filter(opt =>
+            opt.label.toLowerCase().includes(input.toLowerCase())
+        );
+        console.log("Filtered options for", id, ":", filtered);
+        setFilteredOptionsMap(prev => ({
+            ...prev,
+            [id]: filtered
+        }));
+    };
 
     const resetFilters = () => {
         filters.forEach(filter => {
@@ -19,61 +46,86 @@ export default function FilterPanel({ filters, onFilterChange, optionsMap, loadD
     };
 
     return (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <CPSOFilter filter={cpso_filter} onFilterChange={onFilterChange} />
-                <NameFilter filter={name_filter} onFilterChange={onFilterChange} URL={"cpso/doctors/name"} />
-                {other_filters.map(({ id, value, label }) => {
-                    return (
-                        <Select
-                            // disabled={id === 'inMailingList'}
-                            key={id}
-                            // set mode to multiple if the id is not 'inMailingList'
-                            // otherwise set it to 'default'
-                            mode={id === 'inMailingList' ? 'default' : 'multiple'
-                            }
-                            allowClear
-                            showSearch
-                            placeholder={label}
-                            // only show the first 2 selected options in the input box
-                            maxTagCount={2}
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 16
+            }}
+        >
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {/* CPSO search */}
+                <CPSOFilter filter={cpsoFilter} onFilterChange={onFilterChange} />
 
-                            style={{ minWidth: 200 }}
-                            value={value}
-                            options={optionsMap[id] || []}
-                            onChange={vals => onFilterChange(id, vals)}
-                            optionFilterProp='label'
-                        />
-                    );
-                })}
+                {/* First & Last name filters */}
+                <NameFilter
+                    name_filters={nameFilters}
+                    onFilterChange={onFilterChange}
+                    URL="cpso/doctors/names"
+                />
+
+                {/* Other filters */}
+                {otherFilters.map(({ id, value, label }) => (
+                    <Select
+                        disabled={id === "inMailingList"} // disable inMailingList filter
+                        key={id}
+                        mode={id === "inMailingList" ? "default" : "multiple"}
+                        allowClear
+                        showSearch
+                        placeholder={label}
+                        maxTagCount={2}
+                        style={{ minWidth: 200 }}
+                        value={value}
+                        // dynamically override filtering
+                        filterOption={(input, option) => {
+                            if (option.value === "__all__") return true;
+                            return option.label.toLowerCase().includes(input.toLowerCase());
+                        }}
+                        onSearch={input => handleSearch(input, id)}
+                        options={
+                            (id === "specialty" ? optionsMap[id] :
+                                (filteredOptionsMap[id] && filteredOptionsMap[id].length > 0
+                                    ? [
+                                        { label: "Select All", value: "__all__" },
+                                        ...(Array.isArray(filteredOptionsMap[id]) ? filteredOptionsMap[id] : [])
+                                    ]
+                                    : [
+                                        { label: "Select All", value: "__all__" },
+                                        ...(Array.isArray(optionsMap[id]) ? optionsMap[id] : [])
+                                    ]
+                                ))
+                        }
+
+                        onChange={vals => {
+                            // if Select All was chosen, apply only *currently visible* filtered options
+                            if (vals.includes("__all__")) {
+                                const current = filteredOptionsMap[id] || optionsMap[id] || [];
+                                vals = current.map(opt => opt.value);
+                            }
+                            onFilterChange(id, vals);
+                        }}
+                        optionFilterProp="label"
+                    />
+                ))}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: "flex", gap: 8 }}>
                 <Button
                     type="primary"
                     onClick={() => {
                         loadDoctors();
-                        setPage(1); // Reset to the first page when applying filters
+                        setPage(1);
                     }}
-                    style={{ marginLeft: 8 }}
                 >
                     Apply Filters
                 </Button>
-                <Button
-                    type="primary"
-                    onClick={resetFilters}
-                    style={{ marginLeft: 8 }}
-                >
+                <Button type="primary" onClick={resetFilters}>
                     Reset Filters
                 </Button>
-                <Button
-                    type="primary"
-                    onClick={exportToExcel}
-                    loading={isExcelLoading}>
+                <Button type="primary" onClick={exportToExcel} loading={isExcelLoading}>
                     Download Excel
                 </Button>
             </div>
-
-        </div >
+        </div>
     );
 }
-
